@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppContext } from './AppContext';
+import { Link } from 'react-router-dom';
 
 const Leaderboard: React.FC = () => {
     const { person, teammates, otherParticipants } = useAppContext();
@@ -32,6 +33,9 @@ const Leaderboard: React.FC = () => {
         <div style={styles.infoBox}>
             <h3>How Points are Earned</h3>
             <p>Points are awarded based on various activities such as task completion, teamwork, and mentorship contributions. Higher scores indicate greater engagement and success in the program.</p>
+        </div>
+        <div style={{ marginTop: '20px' }}>
+            <Link to="/">Go to Dashboard</Link>
         </div>
     </div>
     );

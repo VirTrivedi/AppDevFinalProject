@@ -1,22 +1,29 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import Leaderboard from './Leaderboard';
-import { AppProvider } from './AppContext';
+import Login from './Login';
+import SignUp from './SignUp';
+import { useAppContext } from './AppContext';
 
 const App: React.FC = () => {
+
+  const { isLoggedIn } = useAppContext();
   return (
-    <AppProvider>
-      <Router>
-        <nav>
-          <Link to="/">Dashboard</Link> | <Link to="/leaderboard">Leaderboard</Link>
-        </nav>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-        </Routes>
-      </Router>
-    </AppProvider>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route
+          path="/"
+          element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/leaderboard"
+          element={isLoggedIn ? <Leaderboard /> : <Navigate to="/login" />}
+        />
+      </Routes>
+    </Router>
   );
 };
 

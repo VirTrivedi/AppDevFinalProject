@@ -11,6 +11,8 @@ interface AppContextType {
   mentors: string[];
   otherParticipants: Person[];
   setPersonScore: (score: number) => void;
+  isLoggedIn: boolean;
+  setLoginStatus: (status: boolean) => void;
 }
 
 const defaultPerson: Person = { name: "Vir", score: 86 };
@@ -36,11 +38,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [teammates] = useState<Person[]>(defaultTeammates);
   const [mentors] = useState<string[]>(defaultMentors);
   const [otherParticipants] = useState<Person[]>(defaultOtherParticipants);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const setPersonScore = (score: number) => setPerson((prev) => ({ ...prev, score }));
 
   return (
-    <AppContext.Provider value={{ person, teammates, mentors, otherParticipants, setPersonScore }}>
+    <AppContext.Provider value={{
+      person,
+      teammates,
+      mentors,
+      otherParticipants,
+      setPersonScore,
+      isLoggedIn,
+      setLoginStatus: setIsLoggedIn
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

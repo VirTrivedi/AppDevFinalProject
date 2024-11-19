@@ -4,6 +4,7 @@ import Dashboard from './Dashboard';
 import Leaderboard from './Leaderboard';
 import Login from './Login';
 import SignUp from './SignUp';
+import AdminDashboard from './AdminDashboard';
 import { useAppContext } from './AppContext';
 
 const App: React.FC = () => {
@@ -21,6 +22,10 @@ const App: React.FC = () => {
         <Route
           path="/leaderboard"
           element={isLoggedIn ? <Leaderboard /> : <Navigate to="/login" />}
+        />
+        <Route
+          path='/admin'
+          element={<AdminDashboard />}
         />
       </Routes>
     </Router>

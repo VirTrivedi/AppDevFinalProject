@@ -39,7 +39,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [mentors] = useState<string[]>(defaultMentors);
   const [otherParticipants] = useState<Person[]>(defaultOtherParticipants);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  
   const setPersonScore = (score: number) => setPerson((prev) => ({ ...prev, score }));
 
   return (

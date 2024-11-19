@@ -9,8 +9,11 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    if (username.trim() && password.trim()) {
-      // Simulate successful login (you can replace with actual authentication logic)
+    if (username == 'admin' && password == '1234') {
+      alert('Admin login successful!');
+      navigate('/admin'); // Redirect to admin dashboard
+    } else if (username.trim() && password.trim()) {
+      // Simulate successful login
       setLoginStatus(true);
       navigate('/'); // Redirect to dashboard
     } else {

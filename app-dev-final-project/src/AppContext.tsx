@@ -10,8 +10,46 @@ interface AppContextType {
   teammates: Person[];
   mentors: string[];
   otherParticipants: Person[];
+  teams: Team[];
   setPersonScore: (score: number) => void;
 }
+
+///mm
+
+type Mentor = {
+  ID: number,
+  name: string,
+  email: string,
+}
+
+type Mentee = {
+  ID: number, 
+  name: string,
+  email: string
+}
+
+type Team = {
+  teamID: number;
+  mentors: Mentor[];
+  mentees: Mentee[];
+}
+
+const teams: Team[] = [
+  {
+    teamID: 1,
+    mentors: [
+      { ID: 1, name: "Matt", email: 'null' },
+      { ID: 2, name: "Samai", email: 'null' }
+    ],
+    mentees: [
+      { ID: 1, name: "Vir", email:'null' },
+      { ID: 2, name: "Riya", email: 'null' },
+      { ID: 3, name: "Sam", email: 'null' },
+      { ID: 4, name: "James", email: 'null' },
+      { ID: 5, name: "Madeline", email: 'null' }
+    ]
+  }
+];
 
 const defaultPerson: Person = { name: "Vir", score: 86 };
 const defaultTeammates: Person[] = [
@@ -40,7 +78,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const setPersonScore = (score: number) => setPerson((prev) => ({ ...prev, score }));
 
   return (
-    <AppContext.Provider value={{ person, teammates, mentors, otherParticipants, setPersonScore }}>
+    <AppContext.Provider value={{ person, teammates, mentors, teams, otherParticipants, setPersonScore }}>
       {children}
     </AppContext.Provider>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import Leaderboard from './Leaderboard';
+import PhotoUpload from './PhotoUpload';
 import Login from './Login';
 import SignUp from './SignUp';
 import AdminDashboard from './AdminDashboard';
@@ -24,7 +25,11 @@ const App: React.FC = () => {
           element={isLoggedIn ? <Leaderboard /> : <Navigate to="/login" />}
         />
         <Route
-          path='/admin'
+          path="/photo-upload"
+          element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/admin"
           element={<AdminDashboard />}
         />
       </Routes>

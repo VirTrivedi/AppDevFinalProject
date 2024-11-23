@@ -10,6 +10,8 @@ interface AppContextType {
   teammates: Person[];
   mentors: string[];
   otherParticipants: Person[];
+  photos: File[];
+  addPhoto: (photo: File) => void;
   setPersonScore: (score: number) => void;
   isLoggedIn: boolean;
   setLoginStatus: (status: boolean) => void;
@@ -38,8 +40,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [teammates] = useState<Person[]>(defaultTeammates);
   const [mentors] = useState<string[]>(defaultMentors);
   const [otherParticipants] = useState<Person[]>(defaultOtherParticipants);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
+  const addPhoto = (photo: File) => {
+    setPhotos((prevPhotos) => [...prevPhotos, photo]);
+  };
+
   const setPersonScore = (score: number) => setPerson((prev) => ({ ...prev, score }));
 
   return (
@@ -48,6 +55,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       teammates,
       mentors,
       otherParticipants,
+      photos,
+      addPhoto,
       setPersonScore,
       isLoggedIn,
       setLoginStatus: setIsLoggedIn

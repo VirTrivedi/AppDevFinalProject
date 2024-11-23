@@ -42,9 +42,20 @@ const Dashboard: React.FC = () => {
           ))}
         </ul>
       </div>
+      
+      <div style={styles.challengeBox}>
+        <h2 style={styles.challengeTitle}>Weekly Challenge</h2>
+        <p style={styles.challengeText}>
+          Challenge goes here!!
+        </p>
+      </div>
 
-      <div style={styles.section}>
+      <div style={{ marginTop: '20px' }}>
         <Link to="/leaderboard">Go to Leaderboard</Link>
+      </div>
+
+      <div style={{ marginTop: '20px' }}>
+        <Link to="/photo-upload">Upload a Photo</Link>
       </div>
 
       <button onClick={handleLogout} style={styles.logoutButton}>
@@ -63,6 +74,21 @@ const styles = {
   },
   section: {
     marginBottom: '20px',
+  }, 
+  challengeBox: {
+    marginTop: '20px',
+    padding: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '5px',
+  },
+  challengeTitle: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    color: '#',
+  },
+  challengeText: {
+    fontSize: '16px',
   },
   logoutButton: {
     marginTop: '20px',
@@ -72,5 +98,5 @@ const styles = {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
-  },
+  }, 
 };

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Dashboard from './Dashboard';
 import Leaderboard from './Leaderboard';
 import PhotoUpload from './PhotoUpload';
+import Photos from './Photos';
 import Login from './Login';
 import SignUp from './SignUp';
 import AdminDashboard from './AdminDashboard';
@@ -27,6 +28,10 @@ const App: React.FC = () => {
         <Route
           path="/photo-upload"
           element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/photos"
+          element={isLoggedIn ? <Photos /> : <Navigate to="/login" />}
         />
         <Route
           path="/admin"

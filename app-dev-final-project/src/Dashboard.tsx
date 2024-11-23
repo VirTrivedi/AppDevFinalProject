@@ -58,6 +58,10 @@ const Dashboard: React.FC = () => {
         <Link to="/photo-upload">Upload a Photo</Link>
       </div>
 
+      <div style={{ marginTop: '20px' }}>
+        <Link to="/photos">View Uploaded Photos</Link>
+      </div>
+
       <button onClick={handleLogout} style={styles.logoutButton}>
         Logout
       </button>

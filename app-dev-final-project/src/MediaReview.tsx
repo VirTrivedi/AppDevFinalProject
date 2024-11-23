@@ -9,48 +9,52 @@ type Photo = {
 };
 
 type PhotoItemProps = {
+  key: number;
   photo: Photo;
-  onApprove: (id: number) => void;
-  onReject: (id: number) => void;
-  onChangeStatus: (id: number) => void; // New prop to handle status reset
+
 };
 
-const PhotoItem = ({ photo, onApprove, onReject, onChangeStatus }: PhotoItemProps) => {
-  const renderStatus = () => {
-    switch (photo.status) {
-      case 'approved':
-        return <span>Approved</span>;
-      case 'rejected':
-        return <span>Rejected</span>;
-      default:
-        return (
-          <>
-            <button onClick={() => onApprove(photo.id)} className="approve-btn">
-              Approve
-            </button>
-            <button onClick={() => onReject(photo.id)} className="reject-btn">
-              Reject
-            </button>
-          </>
-        );
-    }
+const PhotoItem = ({ photo }: PhotoItemProps) => {
+
+  let [rejectStatus, setRejectStatus] = useState(false);
+  let [approveStatus, setApproveStatus] = useState(false);
+
+
+  function handleApprove() {
+        setRejectStatus(false);
+        setApproveStatus(true);
+        photo.status = 'approved';
+    };
+
+  function handleReject() {
+    setRejectStatus(true);
+    setApproveStatus(false);
+    photo.status = 'rejected';
+    };
+  
+  function handleReset() {
+    setRejectStatus(false);
+    setApproveStatus(false);
+    photo.status = 'pending';
   };
 
-  return (
-    <div className="photo-item">
-      <img src={`../public/images/${photo.url}`} alt={photo.caption} className="photo" />
-      <div className="caption">{photo.caption}</div>
-      <div className="controls">
-        {renderStatus()}
-        {(photo.status === 'approved' || photo.status === 'rejected') && (
-          <button onClick={() => onChangeStatus(photo.id)} className="change-status-btn">
-            Change this
-          </button>
-        )}
+
+
+    return (
+      <div className="photo-item">
+        <img src={`../public/images/${photo.url}`} alt={photo.caption} className="photo" />
+        <div className="caption">{photo.caption}</div>
+        <div className="controls">
+
+          {(!rejectStatus && !approveStatus) && (<button onClick={handleApprove} className="approve-btn">Approve</button>)}
+          {(!rejectStatus && !approveStatus) && (<button onClick={handleReject} className="reject-btn">Reject</button>)}
+          {(!rejectStatus && approveStatus) && (<h3>Approved!</h3>)}
+          {(rejectStatus && !approveStatus) && (<h3>Rejected</h3>)}
+          {(!rejectStatus && approveStatus || rejectStatus && !approveStatus) && (<button onClick={handleReset} className="reset-btn">Change this</button>)}
+
+        </div>
       </div>
-    </div>
-  );
-};
+    );};
 
 type Challenge = {
   name: string;
@@ -63,44 +67,13 @@ type MediaReviewPageProps = {
 
 
 const MediaReviewPage = ({ challenges }: MediaReviewPageProps) => {
-//   const [approvedPhotos, setApprovedPhotos] = useState<number[]>([]);
-//   const [rejectedPhotos, setRejectedPhotos] = useState<number[]>([]);
+
   const [openChallenge, setOpenChallenge] = useState<string | null>(null);
 
   challenges = [{name: "Week 01: Halloween", photos: [{id: 1, url: 'download.jpeg', caption: "look at this tree", status: "pending"}]},
   {name: "Week 02: Dorm", photos: [{id: 2, url: 'download.jpeg', caption: "look at this dorm", status: "pending"}]}
   ];
   
-const [photos, setPhotos] = useState<Photo[]>([
-  { id: 1, url: 'download.jpeg', caption: 'look at this tree', status: 'pending' },
-  { id: 2, url: 'download.jpeg', caption: 'look at this dorm', status: 'pending' },
-]);
-const handleApprove = (id: number) => {
-  setPhotos((prevPhotos) =>
-    prevPhotos.map((photo) =>
-      photo.id === id ? { ...photo, status: 'approved' } : photo
-    )
-  );
-};
-
-
-const handleReject = (id: number) => {
-  setPhotos((prevPhotos) =>
-    prevPhotos.map((photo) =>
-      photo.id === id ? { ...photo, status: 'rejected' } : photo
-    )
-  );
-};
-
-const handleChangeStatus = (id: number) => {
-  setPhotos((prevPhotos) =>
-    prevPhotos.map((photo) =>
-      photo.id === id ? { ...photo, status: 'pending' } : photo
-    )
-  );
-};
-
-
 const toggleDropdown = (challengeName: string) => {
   setOpenChallenge(openChallenge === challengeName ? null : challengeName);
 };
@@ -127,9 +100,6 @@ return (
                   <PhotoItem
                     key={photo.id}
                     photo={photo}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                    onChangeStatus={handleChangeStatus}
                   />
                 ))}
               </div>

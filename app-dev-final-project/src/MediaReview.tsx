@@ -83,7 +83,7 @@ const handleApprove = (id: number) => {
   );
 };
 
-// Handle rejection
+
 const handleReject = (id: number) => {
   setPhotos((prevPhotos) =>
     prevPhotos.map((photo) =>
@@ -92,7 +92,6 @@ const handleReject = (id: number) => {
   );
 };
 
-// Handle resetting status to 'pending'
 const handleChangeStatus = (id: number) => {
   setPhotos((prevPhotos) =>
     prevPhotos.map((photo) =>
@@ -100,7 +99,8 @@ const handleChangeStatus = (id: number) => {
     )
   );
 };
-// Toggle dropdown visibility for challenges
+
+
 const toggleDropdown = (challengeName: string) => {
   setOpenChallenge(openChallenge === challengeName ? null : challengeName);
 };
@@ -129,7 +129,7 @@ return (
                     photo={photo}
                     onApprove={handleApprove}
                     onReject={handleReject}
-                    onChangeStatus={handleChangeStatus} // Pass the status reset function
+                    onChangeStatus={handleChangeStatus}
                   />
                 ))}
               </div>

@@ -14,13 +14,15 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div style={styles.section}>
-        <h3>You have 12 photos pending review</h3>
-        <p>Images</p>
+        <Link to="/leaderboard">Go to Leaderboard</Link>
       </div>
 
       <div style={styles.section}>
-        <h3>Attendance input</h3>
-        <p>Due by </p>
+        <Link to="/review">You have 12 photos pending review</Link>
+      </div>
+
+      <div style={styles.section}>
+        <Link to="/attendance">Attendance due in 6 days</Link>
       </div>
 
   

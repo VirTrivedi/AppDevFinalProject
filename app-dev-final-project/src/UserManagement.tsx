@@ -1,33 +1,101 @@
 import React, { useState } from 'react';
-import { useAppContext } from './AppContext';
 
-type Team = typeof useAppContext;
+
+type MentorMentee = {
+  ID: number;
+  name: string;
+  email: string | null; 
+};
+
+type Team = {
+  teamID: number;
+  teamName: string;
+  mentors: MentorMentee[];
+  mentees: MentorMentee[];
+};
+
+const initialTeams: Team[] = [
+  {
+    teamID: 1,
+    teamName: "Blue Team",
+    mentors: [
+      { ID: 1, name: "Mentor A1", email: "mentorA1@example.com" },
+      { ID: 2, name: "Mentor A2", email: "mentorA2@example.com" }
+    ],
+    mentees: [
+      { ID: 1, name: "Mentee A1", email: "menteeA1@example.com" },
+      { ID: 2, name: "Mentee A2", email: "menteeA2@example.com" }
+    ]
+  },
+  {
+    teamID: 2,
+    teamName: "Samai's Legacy",
+    mentors: [
+      { ID: 1, name: "Mentor B1", email: "mentorB1@example.com" }
+    ],
+    mentees: [
+      { ID: 1, name: "Mentee B1", email: "menteeB1@example.com" }
+    ]
+  }
+];
 
 const UserManagement = () => {
-
-
+  const [teams, setTeams] = useState<Team[]>(initialTeams);
 
   const handleDeleteMentor = (teamID: number, mentorID: number) => {
-    setTeams((prevTeams) =>
-      prevTeams.map((team) =>
+    setTeams(prevTeams =>
+      prevTeams.map(team =>
         team.teamID === teamID
           ? {
               ...team,
-              mentors: team.mentors.filter((mentor) => mentor.ID !== mentorID),
+              mentors: team.mentors.filter(mentor => mentor.ID !== mentorID)
             }
           : team
       )
     );
   };
 
+
   const handleDeleteMentee = (teamID: number, menteeID: number) => {
-    setTeams((prevTeams) =>
-      prevTeams.map((team) =>
+    setTeams(prevTeams =>
+      prevTeams.map(team =>
         team.teamID === teamID
           ? {
               ...team,
-              mentees: team.mentees.filter((mentee) => mentee.ID !== menteeID),
+              mentees: team.mentees.filter(mentee => mentee.ID !== menteeID)
             }
+          : team
+      )
+    );
+  };
+
+
+  const handleAddMentor = (teamID: number, mentorName: string) => {
+    const newMentor = {
+      ID: Math.random(), 
+      name: mentorName,
+      email: prompt("Enter mentor's email:") || null 
+    };
+    setTeams(prevTeams =>
+      prevTeams.map(team =>
+        team.teamID === teamID
+          ? { ...team, mentors: [...team.mentors, newMentor] }
+          : team
+      )
+    );
+  };
+
+
+  const handleAddMentee = (teamID: number, menteeName: string) => {
+    const newMentee = {
+      ID: Math.random(), 
+      name: menteeName,
+      email: prompt("Enter mentee's email:") || null 
+    };
+    setTeams(prevTeams =>
+      prevTeams.map(team =>
+        team.teamID === teamID
+          ? { ...team, mentees: [...team.mentees, newMentee] }
           : team
       )
     );
@@ -40,7 +108,6 @@ const UserManagement = () => {
         <div key={team.teamID}>
           <h2>{team.teamName}</h2>
 
-          {/* Mentors Section */}
           <h3>Mentors</h3>
           <ul>
             {team.mentors.map((mentor) => (
@@ -61,7 +128,6 @@ const UserManagement = () => {
             Add Mentor
           </button>
 
-          {/* Mentees Section */}
           <h3>Mentees</h3>
           <ul>
             {team.mentees.map((mentee) => (
@@ -86,4 +152,5 @@ const UserManagement = () => {
     </div>
   );
 };
+
 export default UserManagement;

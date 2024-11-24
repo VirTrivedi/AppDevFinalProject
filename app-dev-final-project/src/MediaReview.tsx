@@ -5,7 +5,7 @@ type Photo = {
   id: number;
   url: string;
   caption: string;
-  status: 'pending' | 'approved' | 'rejected'; // Added status
+  status: 'pending' | 'approved' | 'rejected'; 
 };
 
 type PhotoItemProps = {
@@ -70,7 +70,7 @@ const MediaReviewPage = ({ challenges }: MediaReviewPageProps) => {
 
   const [openChallenge, setOpenChallenge] = useState<string | null>(null);
 
-  challenges = [{name: "Week 01: Halloween", photos: [{id: 1, url: 'download.jpeg', caption: "look at this tree", status: "pending"}]},
+  challenges = [{name: "Week 01: Halloween", photos: [{id: 1, url: 'download.jpeg', caption: "look at this tree", status: "pending"}, {id: 2, url: 'download.jpeg', caption: "look at this tree", status: "pending"}]},
   {name: "Week 02: Dorm", photos: [{id: 2, url: 'download.jpeg', caption: "look at this dorm", status: "pending"}]}
   ];
   

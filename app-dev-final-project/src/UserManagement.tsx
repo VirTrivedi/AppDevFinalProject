@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 
-type MentorMentee = {
+type User = {
   ID: number;
   name: string;
   email: string | null; 
@@ -10,8 +10,8 @@ type MentorMentee = {
 type Team = {
   teamID: number;
   teamName: string;
-  mentors: MentorMentee[];
-  mentees: MentorMentee[];
+  mentors: User[];
+  mentees: User[];
 };
 
 const initialTeams: Team[] = [
@@ -19,8 +19,8 @@ const initialTeams: Team[] = [
     teamID: 1,
     teamName: "Blue Team",
     mentors: [
-      { ID: 1, name: "Mentor A1", email: "mentorA1@example.com" },
-      { ID: 2, name: "Mentor A2", email: "mentorA2@example.com" }
+      { ID: 1, name: "Samai", email: "mentorA1@example.com" },
+      { ID: 2, name: "Matt", email: "mentorA2@example.com" }
     ],
     mentees: [
       { ID: 1, name: "Mentee A1", email: "menteeA1@example.com" },

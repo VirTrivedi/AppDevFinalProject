@@ -1,3 +1,4 @@
+
 CREATE TABLE mentee (
     ID INT AUTO_INCREMENT PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
@@ -15,3 +16,4 @@ CREATE TABLE challenge(
     ChallengeNumber INT NOT NULL,
     UNIQUE (ChallengeNumber)
 );
+

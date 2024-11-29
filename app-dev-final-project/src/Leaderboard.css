@@ -1,0 +1,166 @@
+/* Full-screen container for the leaderboard */
+.leaderboard-container {
+    width: 100vw; /* Make the container span the full width of the screen */
+    min-height: 100vh; /* Ensure it covers the full height of the viewport */
+    margin: 0; /* Remove any default margin */
+    padding: 0; /* Remove default padding */
+    background-color: #5ec3c9; /* Matches the teal background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  /* Header box with gradient */
+  .leaderboard-title {
+    width: 100vw; /* Full screen width */
+    background: linear-gradient(90deg, #ff9e7e, #ff7755); /* Gradient as in the image */
+    color: #2f2f2f; /* Dark text for contrast */
+    padding: 20px 0;
+    font-size: 36px;
+    font-weight: bold;
+    margin: 0; /* Remove default margins */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-sizing: border-box; /* Prevent padding from affecting size */
+  }
+  
+  /* Responsive leaderboard list */
+  .leaderboard-list {
+    width: 90%; /* Adjust width for responsiveness */
+    max-width: 1200px; /* Limit maximum width */
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  /* Individual leaderboard items */
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    background-color: #c4f2f5; /* Matches the light blue cards */
+    width: 100%;
+    padding: 15px 20px;
+    border: none; /* Remove rounding */
+    box-shadow: none; /* Remove box shadow for a flat look */
+    text-align: left;
+  }
+  
+  /* Star container */
+  .star-container {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Star images */
+  .star-icon {
+    width: 50px;
+    height: 50px;
+  }
+  
+  /* User information container */
+  .user-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 10px;
+  }
+  
+  .user-name {
+    font-weight: bold;
+    color: #2f2f2f;
+    font-size: 18px;
+  }
+  
+  .highlight {
+    color: #ff7755; /* Highlighted color for the current user */
+  }
+  
+  .user-score {
+    font-size: 16px;
+    color: #2f2f2f;
+  }
+  
+  /* Info box */
+  .info-box {
+    background-color: #ffffff;
+    width: 90%; /* Adjust width for responsiveness */
+    max-width: 1200px; /* Limit maximum width */
+    padding: 20px;
+    margin: 20px auto;
+    text-align: left;
+    border: none;
+  }
+  
+  .info-box h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #004d61;
+    margin-bottom: 10px;
+  }
+  
+  .info-box p {
+    font-size: 16px;
+    color: #555555;
+    line-height: 1.5;
+  }
+  
+  /* Link back to dashboard */
+  .dashboard-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #ff7f50;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .dashboard-link:hover {
+    background-color: #e96d3d;
+  }
+  
+  /* Add responsive font sizes and layout changes */
+  @media (max-width: 768px) {
+    .leaderboard-title {
+      font-size: 28px;
+    }
+  
+    .leaderboard-item {
+      padding: 10px;
+      flex-direction: column; /* Stack name and score on smaller screens */
+      text-align: center;
+    }
+  
+    .user-info {
+      flex-direction: column;
+      gap: 5px;
+    }
+  
+    .user-name,
+    .user-score {
+      font-size: 16px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .leaderboard-title {
+      font-size: 24px;
+      padding: 15px 0;
+    }
+  
+    .info-box h2 {
+      font-size: 20px;
+    }
+  
+    .info-box p {
+      font-size: 14px;
+    }
+  }  

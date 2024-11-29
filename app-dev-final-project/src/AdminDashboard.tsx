@@ -25,12 +25,12 @@ const Dashboard: React.FC = () => {
         <Link to="/attendance">Attendance due in 6 days</Link>
       </div>
 
-  
     </div>
   );
 };
+    
+export default AdminDashboard;
 
-export default Dashboard;
 
 const styles = {
   dashboardContainer: {
@@ -39,5 +39,29 @@ const styles = {
   },
   section: {
     marginBottom: '20px',
+  }, 
+  challengeBox: {
+    marginTop: '20px',
+    padding: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '5px',
   },
+  challengeTitle: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    color: '#',
+  },
+  challengeText: {
+    fontSize: '16px',
+  },
+  logoutButton: {
+    marginTop: '20px',
+    padding: '10px 20px',
+    backgroundColor: '#FF0000',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  }, 
 };

@@ -1,33 +1,49 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-//import Dashboard from './Dashboard';
+
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import Dashboard from './Dashboard';
 import UserManagement from './UserManagement';
 import AdminDashboard from './AdminDashboard';
 import Leaderboard from './Leaderboard';
 import Attendance from './Attendance';
 import MediaReview from './MediaReview';
-import { AppProvider } from './AppContext';
+import { AppProvider, useAppContext } from './AppContext';
+import PhotoUpload from './PhotoUpload';
+import Photos from './Photos';
+import Login from './Login';
+import SignUp from './SignUp';
+import { useAppContext } from './AppContext';
 
 const App: React.FC = () => {
+
+  const { isLoggedIn } = useAppContext();
   return (
-    <AppProvider>
-      <Router>
-        <nav>
-        <Link to="/">Admin Dashboard</Link>    | 
-        <Link to="/leaderboard">Leaderboard</Link>    |
-        <Link to="/management">User Management</Link>    | 
-        <Link to="/review">Review Media</Link>    | 
-        <Link to="/attendance">Team Attendance</Link> 
-        </nav>
-        <Routes>
-          <Route path="/" element={<AdminDashboard />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/management" element={<UserManagement />} />
-          <Route path="/review" element={<MediaReview challenges={props.challenges} />} />
-          <Route path="/attendance" element={<Attendance />} />
-        </Routes>
-      </Router>
-    </AppProvider>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route
+          path="/"
+          element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/leaderboard"
+          element={isLoggedIn ? <Leaderboard /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/photo-upload"
+          element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/photos"
+          element={isLoggedIn ? <Photos /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/admin"
+          element={<AdminDashboard />}
+        />
+      </Routes>
+    </Router>
   );
 };
 

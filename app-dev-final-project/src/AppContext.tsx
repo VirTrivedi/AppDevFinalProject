@@ -5,13 +5,23 @@ interface Person {
   score: number;
 }
 
+interface Photo {
+  photo: File;
+  caption: string;
+}
+
 interface AppContextType {
   person: Person;
   teammates: Person[];
   mentors: string[];
   otherParticipants: Person[];
+
   teams: Team[];
+  photos: Photo[];
+  addPhoto: (photo: File, caption: string) => void;
   setPersonScore: (score: number) => void;
+  isLoggedIn: boolean;
+  setLoginStatus: (status: boolean) => void;
 }
 
 ///mm
@@ -74,11 +84,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [teammates] = useState<Person[]>(defaultTeammates);
   const [mentors] = useState<string[]>(defaultMentors);
   const [otherParticipants] = useState<Person[]>(defaultOtherParticipants);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  const addPhoto = (photo: File, caption: string) => {
+    setPhotos((prevPhotos) => [...prevPhotos, { photo, caption }]);
+  };
 
   const setPersonScore = (score: number) => setPerson((prev) => ({ ...prev, score }));
 
   return (
-    <AppContext.Provider value={{ person, teammates, mentors, teams, otherParticipants, setPersonScore }}>
+    <AppContext.Provider value={{
+      person,
+      teammates,
+      mentors,
+      otherParticipants,
+      photos,
+      addPhoto,
+      setPersonScore,
+      isLoggedIn,
+      setLoginStatus: setIsLoggedIn
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

@@ -1,31 +1,27 @@
-from typing import Annotated
+from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
-from sqlmodel import Session, SQLModel, create_engine, Column, JSON
+from sqlmodel import Session, SQLModel, create_engine, JSON, Field
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 #committed
 
 # Mentee table model
 class Mentee(SQLModel, table=True):
-    __tablename__ = "mentee"
-
-    ID = Column(int, primary_key=True, autoincrement=True)
-    Name = Column(str(255), index=True, nullable=False)
-    Email = Column(str(255), index=True, nullable=False, unique=True)
-    Password = Column(str(255), nullable=False)
-    Points = Column(int, default=0)
-    Mentors = Column(JSON, default="[]")  # Store JSON as string if not directly supported
-    Images = Column(JSON, default="[]")
+    ID: Optional[int] = Field(default=None, primary_key=True)  
+    Name: str = Field(index=True, nullable=False)  
+    Email: str = Field(index=True, nullable=False, unique=True)  
+    Password: str = Field(nullable=False)  
+    Points: int = Field(default=0)  
+    Mentors: List[str] = Field(default_factory=list)  
+    Images: List[str] = Field(default_factory=list) 
 
 # Challenge table model
 class Challenge(SQLModel, table=True):
-    __tablename__ = "challenge"
-
-    ID = Column(int, primary_key=True, index=True, autoincrement=True)
-    ChallengeName = Column(str(255), index=True, nullable=False)
-    PointsValue = Column(int, nullable=False)
-    ChallengeNumber = Column(int, nullable=False, unique=True)
+    ID: Optional[int] = Field(default=None, primary_key=True, index=True)  
+    ChallengeName: str = Field(index=True, nullable=False)  
+    PointsValue: int = Field(nullable=False)  
+    ChallengeNumber: int = Field(nullable=False, unique=True) 
 
 
 sqlite_database_name = "mentee_chal_data.db" 
@@ -138,3 +134,39 @@ def authenticate_user(credentials: HTTPBasicCredentials, session: SessionDep):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     return user
+
+@app.put("/mentees/{mentee_id}/increase_points")
+def increase_points_by_mentee(mentee_id: int, points_to_add: int, session: SessionDep):
+ 
+   mentee = session.get(Mentee, mentee_id)
+   if not mentee:
+       raise HTTPException(status_code=404, detail="Mentee not found")
+  
+   mentee.Points += points_to_add
+  
+   session.add(mentee)
+   session.commit()
+   session.refresh(mentee)
+  
+   return {"id": mentee.ID, "name": mentee.Name, "updated_points": mentee.Points}
+
+
+@app.put("/mentors/{mentor_name}/increase_points")
+def increase_points_by_group(mentor_name: str, points_to_add: int, session: SessionDep):
+    
+    # Retrieve all mentees who have the specified mentor
+    mentees = list(session.exec(select(Mentee).where(Mentee.Mentors.contains(mentor_name))))
+
+    if not mentees:
+        raise HTTPException(status_code=404, detail="No mentees found with the specified mentor")
+
+    # Update the points for each mentee
+    for mentee in mentees:
+        mentee.Points += points_to_add
+        session.add(mentee)
+
+    # Commit the changes
+    session.commit()
+    
+    return mentee
+

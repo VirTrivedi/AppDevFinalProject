@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAppContext } from './AppContext';
 
 const Dashboard: React.FC = () => {
-  const { person, teammates, mentors } = useAppContext();
+  const { person } = useAppContext();
   person.name = "Kimber"; // remove this 
   
   return (

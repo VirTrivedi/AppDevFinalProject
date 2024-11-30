@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Get the file path from the environment variable
 SERVICE_ACCOUNT_FILE = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 

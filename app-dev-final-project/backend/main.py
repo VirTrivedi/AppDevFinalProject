@@ -3,6 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlmodel import Session, SQLModel, create_engine, Column, JSON
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 #committed
 
 # Mentee table model
@@ -21,7 +22,7 @@ class Mentee(SQLModel, table=True):
 class Challenge(SQLModel, table=True):
     __tablename__ = "challenge"
 
-    ID = Column(int, primary_key=True, index=True, utoincrement=True)
+    ID = Column(int, primary_key=True, index=True, autoincrement=True)
     ChallengeName = Column(str(255), index=True, nullable=False)
     PointsValue = Column(int, nullable=False)
     ChallengeNumber = Column(int, nullable=False, unique=True)
@@ -111,4 +112,56 @@ def delete_mentee(mentee: Mentee, session: SessionDep):
     session.delete(mentee)
     session.commit()
     return {"ok": True}
+
+@app.get("/mentors/{mentee_id}")
+def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
+    mentee = session.get(Mentee, mentee_id)
+    if not mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
     
+    # Assuming mentors are stored as a JSON array of names in the Mentors field
+    return mentee.Mentors
+
+
+@app.put("/mentees/{mentee_id}/increase_points")
+def increase_points(mentee_id: int, points_to_add: int, session: SessionDep):
+   
+    mentee = session.get(Mentee, mentee_id)
+    if not mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
+    
+    # Increase the points
+    mentee.Points += points_to_add
+    
+    # Commit the changes to the database
+    session.add(mentee)
+    session.commit()
+    session.refresh(mentee)
+    
+    return {"id": mentee.ID, "name": mentee.Name, "updated_points": mentee.Points}
+
+# Get a specific mentee (user) by ID
+@app.get("/users/{user_id}")
+def get_user_by_id(user_id: int, session: SessionDep):
+    user = session.get(Mentee, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+    
+# Dependency for HTTP Basic Authentication
+security = HTTPBasic()
+
+@app.post("/users/authenticate")
+def authenticate_user(credentials: HTTPBasicCredentials, session: SessionDep):
+    # Extract the username and password from the credentials
+    username = credentials.username
+    password = credentials.password
+
+    # Query the database for a user with the given username (email)
+    user = session.exec(select(Mentee).where(Mentee.Email == username)).first()
+
+    # Check if the user exists and the password matches
+    if not user or user.Password != password:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    return user

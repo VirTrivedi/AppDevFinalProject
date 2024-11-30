@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppContext } from './AppContext';
 import { Link } from 'react-router-dom';
 import "./Leaderboard.css";
 
 const Leaderboard: React.FC = () => {
-    const { person, teammates, otherParticipants } = useAppContext();
+    const { person, mentees, fetchMentees } = useAppContext();
 
-    // Combine person, teammates, and other participants, and sort by score
-    const allParticipants = [{ ...person }, ...teammates, ...otherParticipants].sort(
-    (a, b) => b.score - a.score
-    );
+    // Combine person and mentees, and sort by score
+    const allParticipants = person
+        ? [{ ...person }, ...mentees.filter((mentee) => mentee.ID !== person.ID)].sort(
+              (a, b) => b.points - a.points
+          )
+        : mentees.sort((a, b) => b.points - a.points);
+
+    useEffect(() => {
+        // Fetch mentees on component mount
+        fetchMentees();
+    }, [fetchMentees]);
 
     return (
         <div className="leaderboard-container">
@@ -17,7 +24,7 @@ const Leaderboard: React.FC = () => {
         
         <div className="leaderboard-list">
             {allParticipants.map((participant, index) => (
-                <div key={index} className="leaderboard-item">
+                <div key={participant.ID || index} className="leaderboard-item">
                     <div className="star-container">
                         {index < 3 && (
                             <img
@@ -28,10 +35,14 @@ const Leaderboard: React.FC = () => {
                         )}
                     </div>
                     <div className="user-info">
-                        <div className={`user-name ${participant.name === person.name ? "highlight" : ""}`}>
+                        <div
+                            className={`user-name ${
+                                person && participant.ID === person.ID ? "highlight" : ""
+                            }`}
+                        >
                             {participant.name}
                         </div>
-                        <div className="user-score">{participant.score} pts</div>
+                        <div className="user-score">{participant.points} pts</div>
                     </div>
                 </div>
             ))}

@@ -1,14 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from './AppContext';
 
 const Dashboard: React.FC = () => {
-  const { person, teammates, mentors, setLoginStatus} = useAppContext();
+  const { person, mentees, mentors, fetchMentees, fetchMentorsForMentee, setLoginStatus } = useAppContext();
   const navigate = useNavigate();
 
-  const sortedTeammates = [...teammates].sort((a, b) => a.name.localeCompare(b.name));
-  const sortedMentors = [...mentors].sort((a, b) => a.localeCompare(b));
-  
+  const [sortedTeammates, setSortedTeammates] = useState(mentees);
+  const [sortedMentors, setSortedMentors] = useState(mentors);
+
+  // Fetch mentees and mentors on mount
+  useEffect(() => {
+    fetchMentees();
+    fetchMentorsForMentee();
+  }, [fetchMentees, fetchMentorsForMentee]);
+
+  // Sort teammates and mentors whenever they are updated
+  useEffect(() => {
+    setSortedTeammates([...mentees].sort((a, b) => a.name.localeCompare(b.name)));
+  }, [mentees]);
+
+  useEffect(() => {
+    setSortedMentors([...mentors].sort((a, b) => a.localeCompare(b)));
+  }, [mentors]);
+
   const handleLogout = () => {
     const confirmLogout = window.confirm('Are you sure you want to log out?');
     if (confirmLogout) {
@@ -21,15 +36,17 @@ const Dashboard: React.FC = () => {
     <div style={styles.dashboardContainer}>
       <h1>Dashboard</h1>
       <div style={styles.section}>
-        <h2>Name: {person.name}</h2>
-        <p>Score: {person.score}</p>
+        <h2>Name: {person?.name || 'Unknown'}</h2>
+        <p>Score: {person?.points || 0}</p>
       </div>
 
       <div style={styles.section}>
         <h3>Teammates and Scores:</h3>
         <ul>
-          {sortedTeammates.map((teammate, index) => (
-            <li key={index}>{teammate.name} - {teammate.score} points</li>
+          {sortedTeammates.map((teammate) => (
+            <li key={teammate.ID}>
+              {teammate.name} - {teammate.points} points
+            </li>
           ))}
         </ul>
       </div>
@@ -42,11 +59,11 @@ const Dashboard: React.FC = () => {
           ))}
         </ul>
       </div>
-      
+
       <div style={styles.challengeBox}>
         <h2 style={styles.challengeTitle}>Weekly Challenge</h2>
         <p style={styles.challengeText}>
-          Challenge goes here!!
+          Complete 3 collaborative tasks this week to earn bonus points!
         </p>
       </div>
 
@@ -78,7 +95,7 @@ const styles = {
   },
   section: {
     marginBottom: '20px',
-  }, 
+  },
   challengeBox: {
     marginTop: '20px',
     padding: '10px',
@@ -89,7 +106,7 @@ const styles = {
     fontSize: '18px',
     fontWeight: 'bold',
     marginBottom: '10px',
-    color: '#',
+    color: '#333',
   },
   challengeText: {
     fontSize: '16px',
@@ -102,5 +119,5 @@ const styles = {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
-  }, 
+  },
 };

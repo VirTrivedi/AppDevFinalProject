@@ -3,19 +3,29 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from './AppContext';
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setLoginStatus } = useAppContext();
+  const { authenticateUser, setLoginStatus } = useAppContext();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if (username == 'admin' && password == '1234') {
+  const handleLogin = async () => {
+    if (email == 'admin' && password == '1234') {
       alert('Admin login successful!');
       navigate('/admin'); // Redirect to admin dashboard
-    } else if (username.trim() && password.trim()) {
-      // Simulate successful login
-      setLoginStatus(true);
-      navigate('/'); // Redirect to dashboard
+    } else if (email.trim() && password.trim()) {
+      try {
+        const success = await authenticateUser(email, password);
+        if (success) {
+          alert('Login successful!');
+          setLoginStatus(true);
+          navigate('/dashboard'); // Redirect to dashboard
+        } else {
+          alert('Invalid email or password.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred during login. Please try again.');
+      }
     } else {
       alert('Please enter both email and password.');
     }
@@ -25,13 +35,13 @@ const Login: React.FC = () => {
     <div style={styles.container}>
       <h1>Login</h1>
       <div style={styles.formGroup}>
-        <label>Username:</label>
+        <label>Email:</label>
         <input
-          type="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           style={styles.input}
-          placeholder="Enter your username"
+          placeholder="Enter your email"
         />
       </div>
       <div style={styles.formGroup}>

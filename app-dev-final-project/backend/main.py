@@ -111,4 +111,21 @@ def delete_mentee(mentee: Mentee, session: SessionDep):
     session.delete(mentee)
     session.commit()
     return {"ok": True}
+
+@app.put("/mentees/{mentee_id}/increase_points")
+def increase_points(mentee_id: int, points_to_add: int, session: SessionDep):
+   
+    mentee = session.get(Mentee, mentee_id)
+    if not mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
+    
+    # Increase the points
+    mentee.Points += points_to_add
+    
+    # Commit the changes to the database
+    session.add(mentee)
+    session.commit()
+    session.refresh(mentee)
+    
+    return {"id": mentee.ID, "name": mentee.Name, "updated_points": mentee.Points}
     

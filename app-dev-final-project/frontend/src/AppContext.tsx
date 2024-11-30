@@ -26,11 +26,11 @@ interface AppContextType {
   mentors: string[];
   fetchMentorsForMentee: () => Promise<void>;
   challenges: Challenge[];
+  fetchOrderedChallenges: () => Promise<void>;
   photos: Photo[];
   addPhoto: (photo: string, caption: string) => void;
   authenticateUser: (email: string, password: string) => Promise<boolean>;
   fetchMentees: () => Promise<void>;
-  fetchChallenges: () => Promise<void>;
   increasePoints: (menteeId: number, pointsToAdd: number) => Promise<void>;
   isLoggedIn: boolean;
   setLoginStatus: (status: boolean) => void;
@@ -78,10 +78,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // Fetch challenges from the backend
-  const fetchChallenges = async () => {
+  // Fetch challenges from the backend in order
+  const fetchOrderedChallenges = async () => {
     try {
-      const response = await axios.get<Challenge[]>(`${API_BASE_URL}/challenges`);
+      const response = await axios.get<Challenge[]>(`${API_BASE_URL}/challenges/ordered`);
       setChallenges(response.data);
     } catch (error) {
       console.error("Error fetching challenges:", error);
@@ -117,7 +117,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Fetch mentees and challenges on mount
   useEffect(() => {
     fetchMentees();
-    fetchChallenges();
+    fetchOrderedChallenges();
   }, []);
 
   useEffect(() => {
@@ -132,13 +132,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         person,
         mentees,
         mentors,
-        fetchMentorsForMentee,
         challenges,
         photos,
         addPhoto,
         authenticateUser,
         fetchMentees,
-        fetchChallenges,
+        fetchMentorsForMentee,
+        fetchOrderedChallenges,
         increasePoints,
         isLoggedIn,
         setLoginStatus: setIsLoggedIn,

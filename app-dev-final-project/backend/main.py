@@ -90,6 +90,10 @@ def create_mentee(name: str, email: str, password: str, session: SessionDep):
 def get_challenges(session: SessionDep):
     return session.exec(select(Challenge)).all()
 
+@app.get("/challenges/ordered")
+def get_challenges_ordered(session: SessionDep):
+    challenges = session.exec(select(Challenge).order_by(Challenge.ChallengeNumber)).all()
+    return challenges
 
 # Example route: Create a new challenge
 @app.post("/challenges/new")

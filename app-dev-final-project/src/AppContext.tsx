@@ -15,12 +15,51 @@ interface AppContextType {
   teammates: Person[];
   mentors: string[];
   otherParticipants: Person[];
+
+  teams: Team[];
   photos: Photo[];
   addPhoto: (photo: File, caption: string) => void;
   setPersonScore: (score: number) => void;
   isLoggedIn: boolean;
   setLoginStatus: (status: boolean) => void;
 }
+
+///mm
+
+type Mentor = {
+  ID: number,
+  name: string,
+  email: string,
+}
+
+type Mentee = {
+  ID: number, 
+  name: string,
+  email: string
+}
+
+type Team = {
+  teamID: number;
+  mentors: Mentor[];
+  mentees: Mentee[];
+}
+
+const teams: Team[] = [
+  {
+    teamID: 1,
+    mentors: [
+      { ID: 1, name: "Matt", email: 'null' },
+      { ID: 2, name: "Samai", email: 'null' }
+    ],
+    mentees: [
+      { ID: 1, name: "Vir", email:'null' },
+      { ID: 2, name: "Riya", email: 'null' },
+      { ID: 3, name: "Sam", email: 'null' },
+      { ID: 4, name: "James", email: 'null' },
+      { ID: 5, name: "Madeline", email: 'null' }
+    ]
+  }
+];
 
 const defaultPerson: Person = { name: "Vir", score: 86 };
 const defaultTeammates: Person[] = [

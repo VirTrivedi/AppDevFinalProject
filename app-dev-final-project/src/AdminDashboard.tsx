@@ -1,40 +1,59 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAppContext } from './AppContext';
 
-const AdminDashboard: React.FC = () => {
-  const { person, teammates, mentors, setLoginStatus} = useAppContext();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    const confirmLogout = window.confirm('Are you sure you want to log out?');
-    if (confirmLogout) {
-      setLoginStatus(false);
-      navigate('/login'); // Redirect to login page
-    }
-  }
+const Dashboard: React.FC = () => {
+  const { person, teammates, mentors } = useAppContext();
+  person.name = "Kimber"; // remove this 
   
   return (
-    <div style={styles.container}>
-      <h1>Admin Dashboard</h1>
-      <p>Welcome, Administrator! Here you can manage users and view system statistics.</p>
-      {/* Add admin-specific functionality here */}
+    <div style={styles.dashboardContainer}>
+      <h1>Dashboard</h1>
+      <div style={styles.section}>
+        <h2>Welcome back, {person.name}!</h2>
+      </div>
 
-      <button onClick={handleLogout} style={styles.logoutButton}>
-        Logout
-      </button>
+      <div style={styles.section}>
+        <Link to="/leaderboard">Go to Leaderboard</Link>
+      </div>
+
+      <div style={styles.section}>
+        <Link to="/review">You have 12 photos pending review</Link>
+      </div>
+
+      <div style={styles.section}>
+        <Link to="/attendance">Attendance due in 6 days</Link>
+      </div>
+
     </div>
   );
 };
-
+    
 export default AdminDashboard;
 
+
 const styles = {
-  container: {
-  padding: '20px',
-  maxWidth: '600px',
-  margin: '50px auto',
-  fontFamily: 'Arial, sans-serif',
+  dashboardContainer: {
+    padding: '20px',
+    fontFamily: 'Arial, sans-serif',
+  },
+  section: {
+    marginBottom: '20px',
+  }, 
+  challengeBox: {
+    marginTop: '20px',
+    padding: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '5px',
+  },
+  challengeTitle: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    color: '#',
+  },
+  challengeText: {
+    fontSize: '16px',
   },
   logoutButton: {
     marginTop: '20px',
@@ -44,5 +63,5 @@ const styles = {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
-  },
+  }, 
 };

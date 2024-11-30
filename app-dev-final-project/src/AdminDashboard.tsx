@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from './AppContext';
 
-const Dashboard: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const { person, teammates, mentors } = useAppContext();
   person.name = "Kimber"; // remove this 
   

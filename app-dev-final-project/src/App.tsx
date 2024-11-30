@@ -7,12 +7,11 @@ import AdminDashboard from './AdminDashboard';
 import Leaderboard from './Leaderboard';
 import Attendance from './Attendance';
 import MediaReview from './MediaReview';
-import { AppProvider, useAppContext } from './AppContext';
 import PhotoUpload from './PhotoUpload';
 import Photos from './Photos';
 import Login from './Login';
 import SignUp from './SignUp';
-import { useAppContext } from './AppContext';
+import { AppProvider, useAppContext } from './AppContext';
 
 const App: React.FC = () => {
 

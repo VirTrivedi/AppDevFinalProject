@@ -41,6 +41,10 @@ const App: React.FC = () => {
           path="/admin"
           element={<AdminDashboard />}
         />
+        <Route
+          path="/attendance"
+          element={<Attendance />}
+        />
       </Routes>
     </Router>
   );

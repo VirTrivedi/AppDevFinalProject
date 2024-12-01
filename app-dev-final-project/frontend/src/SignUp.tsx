@@ -64,7 +64,17 @@ const SignUp: React.FC = () => {
 
 export default SignUp;
 
-const styles = {
+const styles: {
+  page: React.CSSProperties;
+  container: React.CSSProperties;
+  title: React.CSSProperties;
+  formGroup: React.CSSProperties;
+  label: React.CSSProperties;
+  input: React.CSSProperties;
+  button: React.CSSProperties;
+  linkText: React.CSSProperties;
+  link: React.CSSProperties;
+} = {
   page: {
     display: 'flex',
     justifyContent: 'center',
@@ -76,10 +86,11 @@ const styles = {
   },
   container: {
     display: 'flex',
+    flexDirection: 'column',
     justifyContent: 'center',
     width: '100%',
     height: '100%',
-    maxHeight: '580px',
+    maxHeight: '6000px',
     alignItems: 'center',
     maxWidth: '800px',
     padding: '40px',
@@ -89,7 +100,7 @@ const styles = {
   },
   title: {
     fontSize: '4rem',
-    marginBottom: '60px',
+    marginBottom: '30px',
     fontWeight: 'bold',
     color: '#3A1258',
   },
@@ -137,6 +148,6 @@ const styles = {
     color: '#FF6F61',
     textDecoration: 'none',
     fontWeight: 'bold',
-  },
+  }, 
 };
  

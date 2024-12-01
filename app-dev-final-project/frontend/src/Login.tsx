@@ -71,7 +71,17 @@ const Login: React.FC = () => {
 
 export default Login;
 
-const styles = {
+const styles: {
+  page: React.CSSProperties;
+  container: React.CSSProperties;
+  title: React.CSSProperties;
+  formGroup: React.CSSProperties;
+  label: React.CSSProperties;
+  input: React.CSSProperties;
+  button: React.CSSProperties;
+  linkText: React.CSSProperties;
+  link: React.CSSProperties;
+} = {
   page: {
     display: 'flex',
     justifyContent: 'center',
@@ -83,6 +93,7 @@ const styles = {
   },
   container: {
     display: 'flex',
+    flexDirection: 'column',
     justifyContent: 'center',
     width: '100%',
     height: '100%',

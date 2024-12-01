@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 
+// Types for your data
 interface Photo {
   photo: string;
   caption: string;
@@ -21,6 +22,10 @@ interface Challenge {
   PointsValue: number;
 }
 
+// Define AttendanceData type properly
+type AttendanceData = boolean;
+
+// Define context type
 interface AppContextType {
   person: Mentee | null;
   mentees: Mentee[];
@@ -39,10 +44,12 @@ interface AppContextType {
   fetchAttendanceData: (week: number) => Promise<AttendanceData[]>;
 }
 
-const API_BASE_URL = 'http://127.0.0.1:8000'; // Replace with your FastAPI backend URL
+const API_BASE_URL = 'http://127.0.0.1:8000'; // Update to your API URL
 
+// Context creation
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// AppProvider component
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [person, setPerson] = useState<Mentee | null>(null);
   const [mentees, setMentees] = useState<Mentee[]>([]);
@@ -51,18 +58,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Add a photo with a caption
+  // Add photo to the gallery
   const addPhoto = (photo: string, caption: string) => {
     setPhotos((prevPhotos) => [...prevPhotos, { photo, caption }]);
   };
 
-  // Authenticate a user
+  // Authenticate user
   const authenticateUser = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await axios.post(`${API_BASE_URL}/users/authenticate`, {}, {
         auth: { username: email, password },
       });
-      setPerson(response.data); // Set the authenticated user as the current person
+      setPerson(response.data); // Store authenticated person
       setIsLoggedIn(true);
       return true;
     } catch (error) {
@@ -71,7 +78,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // Fetch mentees from the backend
+  // Fetch mentees
   const fetchMentees = async () => {
     try {
       const response = await axios.get<Mentee[]>(`${API_BASE_URL}/mentees`);
@@ -81,7 +88,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // Fetch challenges from the backend
+  // Fetch challenges
   const fetchChallenges = async () => {
     try {
       const response = await axios.get<Challenge[]>(`${API_BASE_URL}/challenges/ordered`);
@@ -91,7 +98,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // Get the current challenge based on the date
+  // Get current challenge based on date
   const getCurrentChallenge = (): Challenge | null => {
     const today = new Date();
     return (
@@ -109,17 +116,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         points_to_add: pointsToAdd,
       });
       console.log("Points updated:", response.data);
-
-      // Optionally, refresh the mentees data after updating points
-      fetchMentees();
+      fetchMentees(); // Refresh mentees list
     } catch (error) {
       console.error("Error increasing points:", error);
     }
   };
 
-  // Fetch mentors for the logged-in mentee
+  // Fetch mentors for logged-in mentee
   const fetchMentorsForMentee = async () => {
-    if (!person) return; // Ensure a logged-in user exists
+    if (!person) return;
     try {
       const response = await axios.get<string[]>(`${API_BASE_URL}/mentors/${person.ID}`);
       setMentors(response.data);
@@ -128,16 +133,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // Fetch mentees and challenges on mount
+  // Fetch attendance data
+  const fetchAttendanceData = async (week: number): Promise<AttendanceData[]> => {
+    try {
+      const response: AxiosResponse<{ attendance_data: AttendanceData[] }> = await axios.get(
+        `${API_BASE_URL}/api/attendance/${week}`
+      );
+      return response.data.attendance_data;
+    } catch (error) {
+      console.error("Error fetching attendance data:", error);
+      return []; // Return an empty array on error
+    }
+  };
+
+  // Fetch data on mount
   useEffect(() => {
     fetchMentees();
     fetchChallenges();
   }, []);
 
   useEffect(() => {
-    if (person) {
-      fetchMentorsForMentee(); // Fetch mentors whenever the logged-in user changes
-    }
+    if (person) fetchMentorsForMentee();
   }, [person]);
 
   return (
@@ -157,6 +173,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         increasePoints,
         isLoggedIn,
         setLoginStatus: setIsLoggedIn,
+        fetchAttendanceData,
       }}
     >
       {children}
@@ -164,15 +181,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   );
 };
 
-async function fetchAttendanceData(week: number) {
-  try {
-    const response = await axios.get(`http://localhost:8000/api/attendance/${week}`);
-    console.log(response.data);
-  } catch (error) {
-    console.error('Error fetching attendance data:', error);
-  }
-};
-
+// Custom hook for consuming context
 export const useAppContext = (): AppContextType => {
   const context = useContext(AppContext);
   if (!context) {

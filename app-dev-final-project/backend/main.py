@@ -2,7 +2,7 @@ from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, ForeignKey, Enum as SQLEnum
-from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship
+from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from datetime import datetime
 from enum import Enum
@@ -29,8 +29,8 @@ class Mentee(SQLModel, table=True):
     Email: str = Field(index=True, nullable=False, unique=True)  
     Password: str = Field(nullable=False)  
     Points: int = Field(default=0)  
-    Mentors: List[str] = Field(default_factory=list)  
-    Images: List[str] = Field(default_factory=list) 
+    Mentors: List[str] = Field(sa_column=Column(JSON))
+    Images: List[str] = Field(sa_column=Column(JSON))
 
 # Challenge table model
 class Challenge(SQLModel, table=True):
@@ -211,10 +211,9 @@ def increase_points_by_group(mentor_name: str, points_to_add: int, session: Sess
     return mentee
 
 # below: google sheet stuff
-def get_google_sheet_data(week_num: int):
+async def get_google_sheet_data(week_num: int):
     if not SERVICE_ACCOUNT_FILE:
-        print("GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
-        return []
+        raise HTTPException(status_code=500, detail="GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
     
     spreadsheet_id = '1XMVHhCLZ0Ipx18_ZnRXDB05DdRUr2KPMXwo6nJXxXY4'  
     start_column = chr(ord('A') + week_num)  # column letter
@@ -236,6 +235,6 @@ def get_google_sheet_data(week_num: int):
 
 @app.get("/api/attendance/{week}")
 async def get_attendance_data(week: int):
-    data = get_google_sheet_data(week)
+    data = await get_google_sheet_data(week)
     return {"week": week, "attendance_data": data}
 

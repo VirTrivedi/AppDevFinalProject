@@ -36,6 +36,7 @@ interface AppContextType {
   increasePoints: (menteeId: number, pointsToAdd: number) => Promise<void>;
   isLoggedIn: boolean;
   setLoginStatus: (status: boolean) => void;
+  fetchAttendanceData: (week: number) => Promise<AttendanceData[]>;
 }
 
 const API_BASE_URL = 'http://127.0.0.1:8000'; // Replace with your FastAPI backend URL
@@ -161,6 +162,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       {children}
     </AppContext.Provider>
   );
+};
+
+async function fetchAttendanceData(week: number) {
+  try {
+    const response = await axios.get(`http://localhost:8000/api/attendance/${week}`);
+    console.log(response.data);
+  } catch (error) {
+    console.error('Error fetching attendance data:', error);
+  }
 };
 
 export const useAppContext = (): AppContextType => {

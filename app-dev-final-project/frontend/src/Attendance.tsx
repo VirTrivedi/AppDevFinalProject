@@ -5,7 +5,7 @@ import { useState } from 'react';
 const Attendance = () => {
     // Initialize attendance data
     const [attendanceData, setAttendanceData] = useState([
-        true, false, true, false, true, true, false, false, true, true, false, true
+        true, true, true, true, true, true, false, false, false, false, false, false
     ]);
 
     // Predefined timestamps for each week (example: Unix timestamps for simplicity)

@@ -1,13 +1,10 @@
 import React from 'react';
-
+import { AppProvider, useAppContext } from './AppContext';
 import { useState } from 'react';
 
 const Attendance = () => {
     // Initialize attendance data
-    const [attendanceData, setAttendanceData] = useState([
-        true, true, true, true, true, true, false, false, false, false, false, false
-    ]);
-
+    const { fetchAttendanceData } = useAppContext();
     // Predefined timestamps for each week (example: Unix timestamps for simplicity)
     const weekTimestamps = [
         1701302400, 

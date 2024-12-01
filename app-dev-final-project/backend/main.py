@@ -22,6 +22,10 @@ class PhotoStatus(str, Enum):
     approved = "approved"
     denied = "denied"
 
+class AttendanceStatus(str, Enum):
+    unpublished = "unpublished"
+    published = "published"
+
 # Mentee table model
 class Mentee(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True)  
@@ -51,6 +55,10 @@ class Photo(SQLModel, table=True):
     # Relationships
     Challenge: Optional[Challenge] = Relationship()
     Team: Optional[Mentee] = Relationship()
+
+class Week(SQLModel, table=True):
+    Published: AttendanceStatus = Field(nullable=False)
+    DateActive: datetime = Field(nullable=False)
 
 sqlite_database_name = "mentee_chal_data.db" 
 sqlite_url = f"sqlite:///{sqlite_database_name}"

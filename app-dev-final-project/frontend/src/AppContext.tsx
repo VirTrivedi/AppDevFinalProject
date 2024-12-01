@@ -3,8 +3,11 @@ import axios, { AxiosResponse } from "axios";
 
 // Types for your data
 interface Photo {
-  photo: string;
-  caption: string;
+  url: string;  // URL of the photo
+  caption: string; // Optional caption for the photo
+  status: 'pending' | 'approved' | 'rejected';  // Current status of the photo
+  challengeId: number;  // ID of the associated challenge
+  teamId: number;  // ID of the associated team
 }
 
 interface Mentee {

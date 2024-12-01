@@ -12,6 +12,15 @@ type PhotoItemProps = {
   photo: Photo;
 };
 
+interface Challenge {
+  ID: number;
+  Description: string;
+  StartDate: string;
+  EndDate: string;
+  PointsValue: number;
+  photos: Photo[]; // Added photos array to match your data
+}
+
 const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
   const [status, setStatus] = useState(photo.status);
 
@@ -42,35 +51,39 @@ const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
 const MediaReviewPage: React.FC = () => {
   const { fetchChallenges } = useAppContext();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [openChallenge, setOpenChallenge] = useState<string | null>(null);
+  const [openChallenge, setOpenChallenge] = useState<number | null>(null); // Changed to number for ID comparison
 
   useEffect(() => {
     const loadChallenges = async () => {
       const fetchedChallenges = await fetchChallenges();
-      setChallenges(fetchedChallenges);
+      if (Array.isArray(fetchedChallenges)) {
+        setChallenges(fetchedChallenges);
+      } else {
+        console.error("Fetched data is not an array", fetchedChallenges);
+      }
     };
     loadChallenges();
   }, [fetchChallenges]);
 
-  const toggleDropdown = (challengeName: string) => {
-    setOpenChallenge(openChallenge === challengeName ? null : challengeName);
+  const toggleDropdown = (challengeID: number) => {
+    setOpenChallenge(openChallenge === challengeID ? null : challengeID);
   };
 
   return (
     <div className="media-review-page">
       <h1>Review Challenge Photos</h1>
       {challenges.map((challenge) => (
-        <div key={challenge.name} className="challenge">
+        <div key={challenge.ID} className="challenge">
           <button
-            onClick={() => toggleDropdown(challenge.name)}
+            onClick={() => toggleDropdown(challenge.ID)} // Use ID for toggling
             className="challenge-dropdown-button"
           >
-            {challenge.name}
+            {challenge.Description} {/* Updated to match your data */}
           </button>
-          {openChallenge === challenge.name && (
+          {openChallenge === challenge.ID && (
             <div className="dropdown-window-overlay">
               <div className="dropdown-window">
-                <h2>{challenge.name} Photos</h2>
+                <h2>{challenge.Description} Photos</h2>
                 <div className="photo-list">
                   {challenge.photos.map((photo) => (
                     <PhotoItem key={photo.id} photo={photo} />

@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from "axios";
 
 // Types for your data
 interface Photo {
-  photo: string;
-  caption: string;
+  url: string;  // URL of the photo
+  caption: string; // Optional caption for the photo
+  status: 'pending' | 'approved' | 'rejected';  // Current status of the photo
+  challengeId: number;  // ID of the associated challenge
+  teamId: number;  // ID of the associated team
 }
 
 interface Mentee {
@@ -20,6 +23,12 @@ interface Challenge {
   StartDate: string;
   EndDate: string;
   PointsValue: number;
+}
+
+interface Week {
+  ID: number;
+  DateActive: string;
+  Published: string; // "unpublished" or "published"
 }
 
 // Define AttendanceData type properly
@@ -42,9 +51,15 @@ interface AppContextType {
   isLoggedIn: boolean;
   setLoginStatus: (status: boolean) => void;
   fetchAttendanceData: (week: number) => Promise<AttendanceData[]>;
+
+  // Week-specific functionality
+  weeks: Week[];
+  fetchWeeks: () => Promise<void>;
+  createWeek: (id: number, dateActive: string) => Promise<void>;
+  publishWeek: (id: number) => Promise<void>;
 }
 
-const API_BASE_URL = 'http://127.0.0.1:8000'; // Update to your API URL
+const API_BASE_URL = "http://127.0.0.1:8000"; // Update to your API URL
 
 // Context creation
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -57,6 +72,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [weeks, setWeeks] = useState<Week[]>([]);
 
   // Add photo to the gallery
   const addPhoto = (photo: string, caption: string) => {
@@ -146,10 +162,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Fetch weeks
+  const fetchWeeks = async () => {
+    try {
+      const response = await axios.get<Week[]>(`${API_BASE_URL}/weeks`);
+      setWeeks(response.data);
+    } catch (error) {
+      console.error("Error fetching weeks:", error);
+    }
+  };
+
+  // Create a new week
+  const createWeek = async (id: number, dateActive: string) => {
+    try {
+      const response = await axios.post<Week>(`${API_BASE_URL}/weeks`, {
+        id,
+        date_active: dateActive,
+      });
+      setWeeks((prevWeeks) => [...prevWeeks, response.data]); // Add to state
+    } catch (error) {
+      console.error("Error creating week:", error);
+    }
+  };
+
+  // Publish a week
+  const publishWeek = async (id: number) => {
+    try {
+      const response = await axios.put<Week>(`${API_BASE_URL}/weeks/${id}/publish`);
+      setWeeks((prevWeeks) =>
+        prevWeeks.map((week) =>
+          week.ID === id ? { ...week, Published: "published" } : week
+        )
+      ); // Update state
+    } catch (error) {
+      console.error("Error publishing week:", error);
+    }
+  };
+
   // Fetch data on mount
   useEffect(() => {
     fetchMentees();
     fetchChallenges();
+    fetchWeeks();
   }, []);
 
   useEffect(() => {
@@ -174,6 +228,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isLoggedIn,
         setLoginStatus: setIsLoggedIn,
         fetchAttendanceData,
+        weeks,
+        fetchWeeks,
+        createWeek,
+        publishWeek,
       }}
     >
       {children}

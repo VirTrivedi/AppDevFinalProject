@@ -43,6 +43,10 @@ const App: React.FC = () => {
           path="/admin"
           element={<AdminDashboard />}
         />
+         <Route
+          path="/media"
+          element={<MediaReview />}
+        />
         <Route
           path="/attendance"
           element={<Attendance />}

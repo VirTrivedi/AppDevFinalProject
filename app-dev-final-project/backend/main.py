@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, ForeignKey, Enum as SQLEnum
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
 import os
@@ -104,10 +105,14 @@ async def get_mentees(session: SessionDep):
     return session.exec(select(Mentee)).all()
 
 
-# Example route: Create a new mentee
+class MenteeCreate(BaseModel):
+    name: str
+    email: str
+    password: str
+
 @app.post("/mentees/new")
-def create_mentee(name: str, email: str, password: str, session: SessionDep):
-    new_mentee = Mentee(Name=name, Email=email, Password=password)
+def create_mentee(mentee: MenteeCreate, session: SessionDep):
+    new_mentee = Mentee(Name=mentee.name, Email=mentee.email, Password=mentee.password)
     session.add(new_mentee)
     try:
         session.commit()
@@ -116,6 +121,7 @@ def create_mentee(name: str, email: str, password: str, session: SessionDep):
         session.rollback()
         raise HTTPException(status_code=400, detail="Error creating mentee. Email may already exist.")
     return new_mentee
+
 
 # Example route: Get all challenges
 @app.get("/challenges")
@@ -157,6 +163,7 @@ def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
     
     # Assuming mentors are stored as a JSON array of names in the Mentors field
     return mentee.Mentors
+
 # Get a specific mentee (user) by ID
 @app.get("/users/{user_id}")
 def get_user_by_id(user_id: int, session: SessionDep):

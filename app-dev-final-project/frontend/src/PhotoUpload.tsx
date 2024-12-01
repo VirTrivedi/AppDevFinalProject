@@ -30,7 +30,7 @@ const PhotoUpload: React.FC = () => {
       return;
     }
 
-    addPhoto(selectedFile, caption);
+    addPhoto(selectedFile.name, caption);
     setSelectedFile(null);
     setCaption('');
     alert('Photo and caption uploaded successfully!');

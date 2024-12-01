@@ -1,19 +1,40 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from "axios";
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const handleSignUp = () => {
-    if (email.trim() && username.trim() && password.trim()) {
-      // Simulate saving user data (in a real app, send data to an API)
-      alert('User registered successfully!');
-      navigate('/login'); // Redirect to login page after successful sign-up
-    } else {
-      alert('Please fill in all fields.');
+  const API_BASE_URL = "http://127.0.0.1:8000";
+
+  const handleSignUp = async () => {
+    if (!name || !email || !password) {
+      setError("All fields are required.");
+      return;
+    }
+
+    try {
+      // Send user data to the backend
+      const response = await axios.post(`${API_BASE_URL}/mentees/new`, {
+        name,
+        email,
+        password,
+      });
+
+      if (response.status === 200) {
+        setSuccess(true);
+        setError("");
+        alert("Signup successful! Redirecting to login page...");
+        navigate("/login"); // Redirect to login page
+      }
+    } catch (err) {
+      console.error("Error during signup:", err);
+      setError("Signup failed. Please try again or use a different email.");
     }
   };
 
@@ -21,24 +42,26 @@ const SignUp: React.FC = () => {
     <div style={styles.page}>
       <div style={styles.container}>
         <h1 style={styles.title}>⭐ Sign Up ⭐</h1>
+        {error && <p style={styles.errorText}>{error}</p>}
+        {success && <p style={styles.successText}>Signup successful!</p>}
         <div style={styles.formGroup}>
+          <label style={styles.label}>Name:</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={styles.input}
+            placeholder="Enter your name"
+          />
+        </div>
+          <div style={styles.formGroup}>
           <label style={styles.label}>Email:</label>
           <input
-            type="email"
+            type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={styles.input}
             placeholder="Enter your email"
-          />
-        </div>
-          <div style={styles.formGroup}>
-          <label style={styles.label}>Username:</label>
-          <input
-            type="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={styles.input}
-            placeholder="Choose a username"
           />
         </div>
         <div style={styles.formGroup}>
@@ -137,6 +160,16 @@ const styles = {
     color: '#FF6F61',
     textDecoration: 'none',
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: "red",
+    fontSize: "14px",
+    marginBottom: "10px",
+  },
+  successText: {
+    color: "green",
+    fontSize: "14px",
+    marginBottom: "10px",
   },
 };
  

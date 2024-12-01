@@ -7,7 +7,7 @@ const Home: React.FC = () => {
    <div style={styles.outerContainer}>
      <div style={styles.imageContainer}>
        <img
-         src="/computer-icon.png"
+         src="/images/computer-icon.png"
          alt="Computer Icon"
          style={styles.icon}
        />

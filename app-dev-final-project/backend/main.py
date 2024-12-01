@@ -86,6 +86,10 @@ def create_mentee(name: str, email: str, password: str, session: SessionDep):
 def get_challenges(session: SessionDep):
     return session.exec(select(Challenge)).all()
 
+@app.get("/challenges/ordered")
+def get_challenges_ordered(session: SessionDep):
+    challenges = session.exec(select(Challenge).order_by(Challenge.ChallengeNumber)).all()
+    return challenges
 
 # Example route: Create a new challenge
 @app.post("/challenges/new")
@@ -109,6 +113,14 @@ def delete_mentee(mentee: Mentee, session: SessionDep):
     session.commit()
     return {"ok": True}
 
+@app.get("/mentors/{mentee_id}")
+def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
+    mentee = session.get(Mentee, mentee_id)
+    if not mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
+    
+    # Assuming mentors are stored as a JSON array of names in the Mentors field
+    return mentee.Mentors
 # Get a specific mentee (user) by ID
 @app.get("/users/{user_id}")
 def get_user_by_id(user_id: int, session: SessionDep):
@@ -169,4 +181,3 @@ def increase_points_by_group(mentor_name: str, points_to_add: int, session: Sess
     session.commit()
     
     return mentee
-

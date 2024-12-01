@@ -1,112 +1,145 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-interface Person {
-  name: string;
-  score: number;
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import axios from 'axios';
 
 interface Photo {
   photo: string;
   caption: string;
 }
 
-interface Mentor {
-  ID: number;
-  name: string;
-  email: string;
-}
-
 interface Mentee {
   ID: number;
   name: string;
   email: string;
+  points: number;
 }
 
-interface Team {
-  teamID: number;
-  mentors: Mentor[];
-  mentees: Mentee[];
+interface Challenge {
+  ID: number;
+  ChallengeName: string;
+  PointsValue: number;
+  ChallengeNumber: number;
 }
 
 interface AppContextType {
-  person: Person;
-  teammates: Person[];
+  person: Mentee | null;
+  mentees: Mentee[];
   mentors: string[];
-  otherParticipants: Person[];
-  teams: Team[];
+  fetchMentorsForMentee: () => Promise<void>;
+  challenges: Challenge[];
+  fetchOrderedChallenges: () => Promise<void>;
   photos: Photo[];
   addPhoto: (photo: string, caption: string) => void;
-  setPersonScore: (score: number) => void;
+  authenticateUser: (email: string, password: string) => Promise<boolean>;
+  fetchMentees: () => Promise<void>;
+  increasePoints: (menteeId: number, pointsToAdd: number) => Promise<void>;
   isLoggedIn: boolean;
   setLoginStatus: (status: boolean) => void;
 }
 
-const defaultPerson: Person = { name: "Vir", score: 86 };
-
-const defaultTeammates: Person[] = [
-  { name: "Riya", score: 78 },
-  { name: "Sam", score: 92 },
-  { name: "James", score: 81 },
-  { name: "Madeline", score: 88 },
-];
-
-const defaultOtherParticipants: Person[] = [
-  { name: "Adam", score: 90 },
-  { name: "Ben", score: 82 },
-  { name: "Charlie", score: 95 },
-  { name: "Danny", score: 88 },
-  { name: "Elaine", score: 76 },
-];
-
-const defaultMentors = ["Samai", "Matt"];
-
-const defaultTeams: Team[] = [
-  {
-    teamID: 1,
-    mentors: [
-      { ID: 1, name: "Matt", email: "null" },
-      { ID: 2, name: "Samai", email: "null" },
-    ],
-    mentees: [
-      { ID: 1, name: "Vir", email: "null" },
-      { ID: 2, name: "Riya", email: "null" },
-      { ID: 3, name: "Sam", email: "null" },
-      { ID: 4, name: "James", email: "null" },
-      { ID: 5, name: "Madeline", email: "null" },
-    ],
-  },
-];
+const API_BASE_URL = 'http://127.0.0.1:8000'; // Replace with your FastAPI backend URL
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [person, setPerson] = useState<Person>(defaultPerson);
-  const [teammates] = useState<Person[]>(defaultTeammates);
-  const [mentors] = useState<string[]>(defaultMentors);
-  const [otherParticipants] = useState<Person[]>(defaultOtherParticipants);
-  const [teams] = useState<Team[]>(defaultTeams);
+  const [person, setPerson] = useState<Mentee | null>(null);
+  const [mentees, setMentees] = useState<Mentee[]>([]);
+  const [mentors, setMentors] = useState<string[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // Add a photo with a caption
   const addPhoto = (photo: string, caption: string) => {
     setPhotos((prevPhotos) => [...prevPhotos, { photo, caption }]);
   };
 
-  const setPersonScore = (score: number) => {
-    setPerson((prev) => ({ ...prev, score }));
+  // Authenticate a user
+  const authenticateUser = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/users/authenticate`, {}, {
+        auth: { username: email, password },
+      });
+      setPerson(response.data); // Set the authenticated user as the current person
+      setIsLoggedIn(true);
+      return true;
+    } catch (error) {
+      console.error("Authentication failed:", error);
+      return false;
+    }
   };
+
+  // Fetch mentees from the backend
+  const fetchMentees = async () => {
+    try {
+      const response = await axios.get<Mentee[]>(`${API_BASE_URL}/mentees`);
+      setMentees(response.data);
+    } catch (error) {
+      console.error("Error fetching mentees:", error);
+    }
+  };
+
+  // Fetch challenges from the backend in order
+  const fetchOrderedChallenges = async () => {
+    try {
+      const response = await axios.get<Challenge[]>(`${API_BASE_URL}/challenges/ordered`);
+      setChallenges(response.data);
+    } catch (error) {
+      console.error("Error fetching challenges:", error);
+    }
+  };
+
+  // Increase points for a mentee
+  const increasePoints = async (menteeId: number, pointsToAdd: number) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/mentees/${menteeId}/increase_points`, {
+        points_to_add: pointsToAdd,
+      });
+      console.log("Points updated:", response.data);
+
+      // Optionally, refresh the mentees data after updating points
+      fetchMentees();
+    } catch (error) {
+      console.error("Error increasing points:", error);
+    }
+  };
+
+  // Fetch mentors for the logged-in mentee
+  const fetchMentorsForMentee = async () => {
+    if (!person) return; // Ensure a logged-in user exists
+    try {
+      const response = await axios.get<string[]>(`${API_BASE_URL}/mentors/${person.ID}`);
+      setMentors(response.data);
+    } catch (error) {
+      console.error("Error fetching mentors:", error);
+    }
+  };
+
+  // Fetch mentees and challenges on mount
+  useEffect(() => {
+    fetchMentees();
+    fetchOrderedChallenges();
+  }, []);
+
+  useEffect(() => {
+    if (person) {
+      fetchMentorsForMentee(); // Fetch mentors whenever the logged-in user changes
+    }
+  }, [person]);
 
   return (
     <AppContext.Provider
       value={{
         person,
-        teammates,
+        mentees,
         mentors,
-        otherParticipants,
-        teams,
+        challenges,
         photos,
         addPhoto,
-        setPersonScore,
+        authenticateUser,
+        fetchMentees,
+        fetchMentorsForMentee,
+        fetchOrderedChallenges,
+        increasePoints,
         isLoggedIn,
         setLoginStatus: setIsLoggedIn,
       }}

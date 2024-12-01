@@ -5,6 +5,7 @@ from sqlalchemy import select, ForeignKey, Enum as SQLEnum
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 from enum import Enum
 import os
 from google.oauth2 import service_account
@@ -58,6 +59,7 @@ class Photo(SQLModel, table=True):
 
 class Week(SQLModel, table=True):
     Published: AttendanceStatus = Field(nullable=False)
+    ID: int = Field(nullable=False)
     DateActive: datetime = Field(nullable=False)
 
 sqlite_database_name = "mentee_chal_data.db" 
@@ -103,6 +105,15 @@ def on_startup():
 async def get_mentees(session: SessionDep):
     return session.exec(select(Mentee)).all()
 
+@app.get("/photos")
+def get_photos_with_relationships(session: SessionDep):
+    photos = session.exec(
+        select(Photo).options(
+            joinedload(Photo.Challenge),
+            joinedload(Photo.Team)
+        )
+    ).all()
+    return photos
 
 # Example route: Create a new mentee
 @app.post("/mentees/new")
@@ -129,20 +140,25 @@ def get_challenges_ordered(session: SessionDep):
 
 # Example route: Create a new challenge
 @app.post("/challenges/new")
-def create_challenge(challenge_name: str, points_value: int, challenge_number: int, session: SessionDep):
-    new_challenge = Challenge(ChallengeName=challenge_name, PointsValue=points_value, ChallengeNumber=challenge_number)
+def create_challenge(description: str, points_value: int, start_date: datetime, end_date: datetime, session: SessionDep):
+    new_challenge = Challenge(
+        Description=description,
+        PointsValue=points_value,
+        StartDate=start_date,
+        EndDate=end_date
+    )
     session.add(new_challenge)
     try:
         session.commit()
         session.refresh(new_challenge)
     except Exception as e:
         session.rollback()
-        raise HTTPException(status_code=400, detail="Error creating challenge. Challenge number may already exist.")
+        raise HTTPException(status_code=400, detail="Error creating challenge. Duplicate data or invalid inputs.")
     return new_challenge
 
 @app.delete("/mentees/{mentee_id}")
-def delete_mentee(mentee: Mentee, session: SessionDep):
-    mentee = session.get(Mentee)
+def delete_mentee(mentee_id: int, session: SessionDep):
+    mentee = session.get(Mentee, mentee_id)
     if not mentee:
         raise HTTPException(status_code=404, detail="Hero not found")
     session.delete(mentee)
@@ -216,7 +232,8 @@ def increase_points_by_group(mentor_name: str, points_to_add: int, session: Sess
     # Commit the changes
     session.commit()
     
-    return mentee
+    return {"updated_mentees": [{"id": m.ID, "name": m.Name, "updated_points": m.Points} for m in mentees]}
+
 
 # below: google sheet stuff
 async def get_google_sheet_data(week_num: int):
@@ -244,5 +261,43 @@ async def get_google_sheet_data(week_num: int):
 @app.get("/api/attendance/{week}")
 async def get_attendance_data(week: int):
     data = await get_google_sheet_data(week)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"No attendance data found for week {week}.")
     return {"week": week, "attendance_data": data}
 
+
+@app.get("/weeks")
+def get_all_weeks(session: SessionDep):
+    weeks = session.exec(select(Week)).all()
+    return weeks
+
+@app.get("/weeks/{week_id}")
+def get_week_by_id(week_id: int, session: SessionDep):
+    week = session.get(Week, week_id)
+    if not week:
+        raise HTTPException(status_code=404, detail="Week not found")
+    return week
+
+@app.post("/weeks")
+def create_week(id: int, date_active: datetime, session: SessionDep):
+    new_week = Week(ID=id, DateActive=date_active, Published="unpublished")
+    session.add(new_week)
+    try:
+        session.commit()
+        session.refresh(new_week)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="Error creating week. Duplicate ID or invalid data.")
+    return new_week
+
+@app.put("/weeks/{week_id}/publish")
+def update_week_status(week_id: int, published_status: AttendanceStatus, session: SessionDep):
+    week = session.get(Week, week_id)
+    if not week:
+        raise HTTPException(status_code=404, detail="Week not found")
+    
+    week.Published = published_status
+    session.add(week)
+    session.commit()
+    session.refresh(week)
+    return week

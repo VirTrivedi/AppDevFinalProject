@@ -15,9 +15,10 @@ interface Mentee {
 
 interface Challenge {
   ID: number;
-  ChallengeName: string;
+  Description: string;
+  StartDate: string;
+  EndDate: string;
   PointsValue: number;
-  ChallengeNumber: number;
 }
 
 interface AppContextType {
@@ -26,7 +27,8 @@ interface AppContextType {
   mentors: string[];
   fetchMentorsForMentee: () => Promise<void>;
   challenges: Challenge[];
-  fetchOrderedChallenges: () => Promise<void>;
+  fetchChallenges: () => Promise<void>;
+  getCurrentChallenge: () => Challenge | null;
   photos: Photo[];
   addPhoto: (photo: string, caption: string) => void;
   authenticateUser: (email: string, password: string) => Promise<boolean>;
@@ -78,14 +80,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // Fetch challenges from the backend in order
-  const fetchOrderedChallenges = async () => {
+  // Fetch challenges from the backend
+  const fetchChallenges = async () => {
     try {
       const response = await axios.get<Challenge[]>(`${API_BASE_URL}/challenges/ordered`);
       setChallenges(response.data);
     } catch (error) {
       console.error("Error fetching challenges:", error);
     }
+  };
+
+  // Get the current challenge based on the date
+  const getCurrentChallenge = (): Challenge | null => {
+    const today = new Date();
+    return (
+      challenges.find(
+        (challenge) =>
+          new Date(challenge.StartDate) <= today && new Date(challenge.EndDate) >= today
+      ) || null
+    );
   };
 
   // Increase points for a mentee
@@ -117,7 +130,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Fetch mentees and challenges on mount
   useEffect(() => {
     fetchMentees();
-    fetchOrderedChallenges();
+    fetchChallenges();
   }, []);
 
   useEffect(() => {
@@ -138,7 +151,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         authenticateUser,
         fetchMentees,
         fetchMentorsForMentee,
-        fetchOrderedChallenges,
+        fetchChallenges,
+        getCurrentChallenge,
         increasePoints,
         isLoggedIn,
         setLoginStatus: setIsLoggedIn,

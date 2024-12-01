@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from './AppContext';
 
 const Dashboard: React.FC = () => {
-  const { person, mentees, mentors, fetchMentees, fetchMentorsForMentee, setLoginStatus } = useAppContext();
+  const { person, mentees, mentors, fetchMentees, fetchMentorsForMentee, getCurrentChallenge, fetchChallenges, setLoginStatus } = useAppContext();
   const navigate = useNavigate();
 
   const [sortedTeammates, setSortedTeammates] = useState(mentees);
@@ -13,7 +13,10 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchMentees();
     fetchMentorsForMentee();
-  }, [fetchMentees, fetchMentorsForMentee]);
+    fetchChallenges();
+  }, [fetchMentees, fetchMentorsForMentee, fetchChallenges]);
+
+  const currentChallenge = getCurrentChallenge();
 
   // Sort teammates and mentors whenever they are updated
   useEffect(() => {
@@ -62,9 +65,22 @@ const Dashboard: React.FC = () => {
 
       <div style={styles.challengeBox}>
         <h2 style={styles.challengeTitle}>Weekly Challenge</h2>
-        <p style={styles.challengeText}>
-          Complete 3 collaborative tasks this week to earn bonus points!
-        </p>
+        {currentChallenge ? (
+          <>
+            <p style={styles.challengeText}>{currentChallenge.Description}</p>
+            <p style={styles.challengePoints}>
+              Earn {currentChallenge.PointsValue} points!
+            </p>
+            <p style={styles.challengeDates}>
+              Valid from {new Date(currentChallenge.StartDate).toLocaleDateString()} to{" "}
+              {new Date(currentChallenge.EndDate).toLocaleDateString()}
+            </p>
+          </>
+        ) : (
+          <p style={styles.noChallengeText}>
+            No active challenges at the moment. Check back soon!
+          </p>
+        )}
       </div>
 
       <div style={{ marginTop: '20px' }}>
@@ -103,13 +119,26 @@ const styles = {
     borderRadius: '5px',
   },
   challengeTitle: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    marginBottom: '10px',
-    color: '#333',
+    fontSize: "18px",
+    fontWeight: "bold",
+    marginBottom: "10px",
   },
   challengeText: {
-    fontSize: '16px',
+    fontSize: "16px",
+    marginBottom: "10px",
+  },
+  challengePoints: {
+    fontSize: "16px",
+    color: "#007BFF",
+  },
+  challengeDates: {
+    fontSize: "14px",
+    color: "#555",
+  },
+  noChallengeText: {
+    fontSize: "16px",
+    fontStyle: "italic",
+    color: "#777",
   },
   logoutButton: {
     marginTop: '20px',

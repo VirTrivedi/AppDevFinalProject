@@ -9,11 +9,20 @@ CREATE TABLE user (
     Role ENUM('mentee', 'admin') NOT NULL
 );
 
-CREATE TABLE challenge(
-    ID INT AUTO_INCREMENT PRIMARY KEY,
-    ChallengeName VARCHAR(255) NOT NULL,
-    PointsValue INT NOT NULL,
-    ChallengeNumber INT NOT NULL,
-    UNIQUE (ChallengeNumber)
+CREATE TABLE challenge (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Description TEXT NOT NULL,
+    StartDate DATETIME NOT NULL,
+    EndDate DATETIME NOT NULL,
+    PointsValue INTEGER NOT NULL
 );
 
+CREATE TABLE photo (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    URL TEXT NOT NULL,
+    Status TEXT CHECK(Status IN ('pending', 'approved', 'denied')) DEFAULT 'pending',
+    ChallengeID INTEGER NOT NULL,
+    TeamID INTEGER NOT NULL,
+    FOREIGN KEY (ChallengeID) REFERENCES challenge(ID) ON DELETE CASCADE,
+    FOREIGN KEY (TeamID) REFERENCES mentee(ID) ON DELETE CASCADE
+);

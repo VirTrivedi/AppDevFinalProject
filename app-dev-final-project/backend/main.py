@@ -1,10 +1,18 @@
 from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
-from sqlmodel import Session, SQLModel, create_engine, JSON, Field
+from sqlalchemy import select, ForeignKey, Enum as SQLEnum
+from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from datetime import datetime
+from enum import Enum
 #committed
+
+# Enum for photo status
+class PhotoStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    denied = "denied"
 
 # Mentee table model
 class Mentee(SQLModel, table=True):
@@ -19,10 +27,22 @@ class Mentee(SQLModel, table=True):
 # Challenge table model
 class Challenge(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True, index=True)  
-    ChallengeName: str = Field(index=True, nullable=False)  
-    PointsValue: int = Field(nullable=False)  
-    ChallengeNumber: int = Field(nullable=False, unique=True) 
+    Description: str = Field(nullable=False)  
+    StartDate: datetime = Field(nullable=False)  
+    EndDate: datetime = Field(nullable=False)
+    PointsValue: int = Field(nullable=False)
 
+# Photo table model
+class Photo(SQLModel, table=True):
+    ID: Optional[int] = Field(default=None, primary_key=True)
+    URL: str = Field(max_length=500, nullable=False)
+    Status: PhotoStatus = Field(sa_column=SQLEnum(PhotoStatus), default=PhotoStatus.pending)
+    ChallengeID: int = Field(ForeignKey("challenge.ID"), nullable=False)
+    TeamID: int = Field(ForeignKey("mentee.ID"), nullable=False)
+
+    # Relationships
+    Challenge: Optional[Challenge] = Relationship()
+    Team: Optional[Mentee] = Relationship()
 
 sqlite_database_name = "mentee_chal_data.db" 
 sqlite_url = f"sqlite:///{sqlite_database_name}"
@@ -88,7 +108,7 @@ def get_challenges(session: SessionDep):
 
 @app.get("/challenges/ordered")
 def get_challenges_ordered(session: SessionDep):
-    challenges = session.exec(select(Challenge).order_by(Challenge.ChallengeNumber)).all()
+    challenges = session.exec(select(Challenge).order_by(Challenge.ID)).all()
     return challenges
 
 # Example route: Create a new challenge

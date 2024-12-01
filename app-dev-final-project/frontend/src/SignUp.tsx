@@ -18,44 +18,46 @@ const SignUp: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <h1>Sign Up</h1>
-      <div style={styles.formGroup}>
-        <label>Email:</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-          placeholder="Enter your email"
-        />
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h1 style={styles.title}>⭐ Sign Up ⭐</h1>
+        <div style={styles.formGroup}>
+          <label style={styles.label}>Email:</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={styles.input}
+            placeholder="Enter your email"
+          />
+        </div>
+          <div style={styles.formGroup}>
+          <label style={styles.label}>Username:</label>
+          <input
+            type="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={styles.input}
+            placeholder="Choose a username"
+          />
+        </div>
+        <div style={styles.formGroup}>
+          <label style={styles.label}>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={styles.input}
+            placeholder="Enter your password"
+          />
+        </div>
+        <button onClick={handleSignUp} style={styles.button}>
+          Sign Up
+        </button>
+        <p style={styles.linkText}>
+          Already have an account? <Link to="/login">Log in</Link>
+        </p>
       </div>
-      <div style={styles.formGroup}>
-        <label>Username:</label>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          style={styles.input}
-          placeholder="Choose a username"
-        />
-      </div>
-      <div style={styles.formGroup}>
-        <label>Password:</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-          placeholder="Enter your password"
-        />
-      </div>
-      <button onClick={handleSignUp} style={styles.button}>
-        Sign Up
-      </button>
-      <p style={styles.linkText}>
-        Already have an account? <Link to="/login">Log in</Link>
-      </p>
     </div>
   );
 };
@@ -63,34 +65,78 @@ const SignUp: React.FC = () => {
 export default SignUp;
 
 const styles = {
+  page: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    margin: '0',
+    fontFamily: "'Arial', sans-serif",
+    width: '100vw',
+  },
   container: {
-    padding: '20px',
-    maxWidth: '400px',
-    margin: '50px auto',
-    fontFamily: 'Arial, sans-serif',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    maxHeight: '580px',
+    alignItems: 'center',
+    maxWidth: '800px',
+    padding: '40px',
+    borderRadius: '20px',
+    background: 'linear-gradient(to bottom, #FFFBCC, #FFF3A0)',
+    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
+  },
+  title: {
+    fontSize: '4rem',
+    marginBottom: '60px',
+    fontWeight: 'bold',
+    color: '#3A1258',
   },
   formGroup: {
-    marginBottom: '15px',
+    marginBottom: '50px',
+    marginTop: 'auto',
+    width: '100%',
+  },
+  label: {
+    fontSize: '2rem',
+    color: '#3A1258',
+    fontWeight: 'bold',
+    marginBottom: '5px',
+    display: 'block',
   },
   input: {
-    width: '100%',
-    padding: '10px',
-    marginTop: '5px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
+    width: '90%',
+    padding: '30px',
+    borderRadius: '20px',
+    border: '5px solid #FFA99F',
+    backgroundColor: '#FFF4E6',
+    fontSize: '1.2rem',
+    color: '#3A1258',
+    outline: 'none',
+    transition: '0.3s',
   },
   button: {
     padding: '10px 20px',
-    backgroundColor: '#007BFF',
-    color: 'white',
+    fontSize: '1.9rem',
+    fontWeight: 'bold',
+    color: '#fff',
+    backgroundColor: '#FF6F61',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '10px',
     cursor: 'pointer',
+    transition: 'background-color 0.3s',
+    marginTop: '-10px',
   },
   linkText: {
     marginTop: '10px',
-    fontSize: '14px',
+    fontSize: '0.9rem',
+    color: '#333',
+  },
+  link: {
+    color: '#FF6F61',
+    textDecoration: 'none',
+    fontWeight: 'bold',
   },
 };
+ 

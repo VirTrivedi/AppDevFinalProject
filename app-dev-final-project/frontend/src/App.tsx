@@ -9,9 +9,10 @@ import Attendance from './Attendance';
 import MediaReview from './MediaReview';
 import PhotoUpload from './PhotoUpload';
 import Photos from './Photos';
+import MainPage from './MainPage';
 import Login from './Login';
 import SignUp from './SignUp';
-import { AppProvider, useAppContext } from './AppContext';
+import { useAppContext } from './AppContext';
 
 const App: React.FC = () => {
 
@@ -19,23 +20,24 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route
-          path="/"
-          element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />}
+          path="/dashboard"
+          element={isLoggedIn ? <Dashboard /> : <Navigate to="/" />}
         />
         <Route
           path="/leaderboard"
-          element={isLoggedIn ? <Leaderboard /> : <Navigate to="/login" />}
+          element={isLoggedIn ? <Leaderboard /> : <Navigate to="/" />}
         />
         <Route
           path="/photo-upload"
-          element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/login" />}
+          element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/" />}
         />
         <Route
           path="/photos"
-          element={isLoggedIn ? <Photos /> : <Navigate to="/login" />}
+          element={isLoggedIn ? <Photos /> : <Navigate to="/" />}
         />
         <Route
           path="/admin"
@@ -49,52 +51,6 @@ const App: React.FC = () => {
     </Router>
   );
 };
-
-type Photo = {
-  id: number;
-  url: string;
-  caption: string;
-  status: 'pending' | 'approved' | 'rejected'; // Added status
-};
-
-type Challenge = {
-  name: string;
-  photos: Photo[];
-};
-
-type MediaReviewPageProps = {
-  challenges: Challenge[];
-};
-
-const props: MediaReviewPageProps = {
-  challenges: [
-    {
-      name: "Week 01: Halloween",
-      photos: [
-        {
-          id: 1,
-          url: 'download.jpeg',
-          caption: "look at this tree",
-          status: "pending"
-        }
-      ]
-    },
-    {
-      name: "Week 02: Dorm",
-      photos: [
-        {
-          id: 2,
-          url: 'download.jpeg',
-          caption: "look at this dorm",
-          status: "pending"
-        }
-      ]
-    }
-  ]
-};
-
-  
-
 
 export default App;
 

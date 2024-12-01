@@ -97,6 +97,8 @@ const styles: {
   button: React.CSSProperties;
   linkText: React.CSSProperties;
   link: React.CSSProperties;
+  errorText: React.CSSProperties;
+  successText: React.CSSProperties;
 } = {
   page: {
     display: 'flex',

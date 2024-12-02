@@ -1,5 +1,5 @@
 from typing import Annotated, List, Optional
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, ForeignKey, Enum as SQLEnum
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
@@ -57,6 +57,7 @@ class Challenge(SQLModel, table=True):
 class Photo(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True)
     FileData: bytes = Field(nullable=False)
+    Caption: str = Field(nullable=False, max_length=500)
     Status: PhotoStatus = Field(sa_column=SQLEnum(PhotoStatus), default=PhotoStatus.pending)
     ChallengeID: int = Field(ForeignKey("challenge.ID"), nullable=False)
     TeamID: int = Field(ForeignKey("mentee.ID"), nullable=False)
@@ -124,27 +125,28 @@ def create_photo(
     caption: Annotated[str, Form(...)],
     challenge_id: Annotated[int, Form(...)],
     team_id: Annotated[int, Form(...)],
-    session: SessionDep,
+    session: SessionDep
 ):
-    # Validate challenge existence
+    # Validate ChallengeID
     challenge = session.get(Challenge, challenge_id)
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
     
-    # Validate team existence
-    team = session.get(Mentee, team_id)
+    # Validate TeamID
+    team = session.get(User, team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
     
     # Read the file's binary data
     file_data = file.file.read()
 
-    # Create a new photo record
+    # Create a new Photo record
     new_photo = Photo(
         FileData=file_data,
-        Status=PhotoStatus.pending,
+        Caption=caption,  # Include caption
+        Status=PhotoStatus.pending,  # Default to 'pending'
         ChallengeID=challenge_id,
-        TeamID=team_id,
+        TeamID=team_id
     )
     session.add(new_photo)
 
@@ -155,7 +157,11 @@ def create_photo(
         session.rollback()
         raise HTTPException(status_code=400, detail=f"Error saving photo: {e}")
 
-    return {"message": "Photo uploaded successfully", "photo_id": new_photo.ID}
+    return {
+        "message": "Photo uploaded successfully",
+        "photo_id": new_photo.ID,
+        "caption": new_photo.Caption
+    }
 
 @app.get("/photos/pending")
 def get_pending_photos(session: SessionDep):
@@ -325,7 +331,7 @@ def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
     if not mentee:
         raise HTTPException(status_code=404, detail="Mentee not found")
     
-    # Assuming mentors are stored as a JSON array of names in the Mentors field
+    # Return JSON Array of mentors
     return mentee.Mentors
 
 # Get a specific mentee (user) by ID
@@ -449,8 +455,8 @@ def get_week_by_id(week_id: int, session: SessionDep):
     return week
 
 @app.post("/weeks")
-def create_week(id: int, date_active: datetime, session: SessionDep):
-    new_week = Week(ID=id, DateActive=date_active, Published="unpublished")
+def create_week(date_active: datetime, session: SessionDep):
+    new_week = Week(DateActive=date_active, Published="unpublished")
     session.add(new_week)
     try:
         session.commit()

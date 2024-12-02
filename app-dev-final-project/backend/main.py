@@ -49,6 +49,18 @@ class User(SQLModel, table=True):
 
     # Relationships
     Photos: List["Photo"] = Relationship(back_populates="Team")
+# Pydantic models for response validation
+class UserOut(BaseModel):
+    ID: int
+    Name: str
+    Email: str
+    Points: int
+    Mentors: Optional[List[str]] = None
+    Images: Optional[List[str]] = None
+    Role: RoleEnum
+
+    class Config:
+        orm_mode = True  # This tells Pydantic to treat ORM models as dictionaries
 
 # Challenge Model
 class Challenge(SQLModel, table=True):
@@ -82,18 +94,7 @@ class Week(SQLModel, table=True):
     Published: AttendanceStatus = Field(nullable=False)  # Stored as strings in SQLite
     DateActive: datetime = Field(nullable=False)
 
-# Pydantic models for response validation
-class UserOut(BaseModel):
-    ID: int
-    Name: str
-    Email: str
-    Points: int
-    Mentors: Optional[List[str]] = None
-    Images: Optional[List[str]] = None
-    Role: RoleEnum
 
-    class Config:
-        orm_mode = True  # This tells Pydantic to treat ORM models as dictionaries
 
 
 sqlite_database_name = "mentee_chal_data.db" 
@@ -142,14 +143,6 @@ app.add_middleware(
 def on_startup():
     create_db_and_tables()
 
-# # Example route: Get all mentees
-# @app.get("/mentees", response_model=List[User])
-# def get_all_mentees(session: Session = Depends(get_session)):
-#     mentees_query = select(User).where(User.Role == RoleEnum.mentee)
-#     mentees = session.exec(mentees_query).all()
-#     if not mentees:
-#         raise HTTPException(status_code=404, detail="No mentees found")
-#     return mentees
 
 from pydantic import BaseModel
 from typing import List
@@ -207,6 +200,65 @@ def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):
         Role=mentee.Role,
     )
     return mentee_out
+
+
+@app.post("/mentees/new", response_model=dict)
+def create_mentee(mentee_data: dict, session: Session = Depends(get_session)):
+    # Extract data directly from the dict
+    name = mentee_data.get("Name")
+    email = mentee_data.get("Email")
+    password = mentee_data.get("Password")
+
+    if not all([name, email, password]):
+        raise HTTPException(status_code=400, detail="Missing required fields")
+
+    # Check if the email already exists
+    existing_user = session.exec(select(User).where(User.Email == email)).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Create the new mentee user
+    new_user = User(
+        Name=name,
+        Email=email,
+        Password=password,  # Hash the password before storing (e.g., use bcrypt)
+        Points=0,  # Default points for a new mentee
+        Role=RoleEnum.mentee  # Default role set to 'mentee'
+    )
+    session.add(new_user)
+    try:
+        # Commit the transaction and refresh the new user instance
+        session.commit()
+        session.refresh(new_user)
+    except Exception as e:
+        # Rollback the transaction in case of an error
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error creating user: {e}")
+
+    return {
+        "message": "User created successfully",
+        "user_id": new_user.ID
+    }
+
+
+@app.delete("/mentees/{mentee_id}")
+def delete_mentee(mentee_id: int, session: SessionDep):
+    mentee = session.get(User, mentee_id)
+    if not mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
+    session.delete(mentee)
+    session.commit()
+    return {"ok": True}
+
+
+
+
+############
+
+
+
+
+
 
 
 
@@ -346,37 +398,8 @@ def deny_photo(photo_id: int, session: SessionDep):
 
     return {"message": f"Photo ID {photo_id} has been denied", "photo": photo}
 
-class MenteeCreate(BaseModel):
-    name: str
-    email: str
-    password: str
 
-@app.post("/mentees/new")
-def create_mentee(mentee_data: MenteeCreate, session: Session = Depends(get_session)):
-    """Create a new user with default points and role set to 'mentee'."""
-    # Check if email already exists
-    existing_user = session.exec(select(User).where(User.Email == mentee_data.Email)).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Create a new user
-    new_user = User(
-        Name=mentee_data.Name,
-        Email=mentee_data.Email,
-        Password=mentee_data.Password,  # Ideally, hash the password before storing
-        Points=0,
-        Role=RoleEnum.mentee
-    )
-    session.add(new_user)
-
-    try:
-        session.commit()
-        session.refresh(new_user)
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=400, detail=f"Error creating user: {e}")
-
-    return {"message": "User created successfully", "user_id": new_user.ID}
 
 
 # Example route: Get all challenges
@@ -407,23 +430,7 @@ def create_challenge(description: str, start_date: datetime, end_date: datetime,
         raise HTTPException(status_code=400, detail="Error creating challenge. Duplicate data or invalid inputs.")
     return new_challenge
 
-@app.delete("/mentees/{mentee_id}")
-def delete_mentee(mentee_id: int, session: SessionDep):
-    mentee = session.get(User, mentee_id)
-    if not mentee:
-        raise HTTPException(status_code=404, detail="Mentee not found")
-    session.delete(mentee)
-    session.commit()
-    return {"ok": True}
 
-@app.get("/mentors/{mentee_id}")
-def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
-    mentee = session.get(User, mentee_id)
-    if not mentee:
-        raise HTTPException(status_code=404, detail="Mentee not found")
-    
-    # Return JSON Array of mentors
-    return mentee.Mentors
 
 # Get a specific mentee (user) by ID
 @app.get("/users/{user_id}")

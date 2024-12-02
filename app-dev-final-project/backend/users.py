@@ -33,7 +33,7 @@ userData = [
 # Insert updated user data
 cur.executemany(
     "INSERT INTO user (Name, Email, Password, Points, Role, TeamID) VALUES (?,?,?,?,?,?)",
-    userData
+
 )
 
 # Commit changes and close the connection

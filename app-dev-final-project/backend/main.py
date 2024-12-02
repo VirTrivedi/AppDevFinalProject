@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 SERVICE_ACCOUNT_FILE = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
@@ -30,20 +31,16 @@ class AttendanceStatus(str, Enum):
     unpublished = "unpublished"
     published = "published"
 
-# User table model
-class RoleEnum(str, Enum):
-    mentee = "mentee"
-    admin = "admin"
+# Mentee table model
+class Mentee(SQLModel, table=True):
+    ID: Optional[int] = Field(default=None, primary_key=True)  
+    Name: str = Field(index=True, nullable=False)  
+    Email: str = Field(index=True, nullable=False, unique=True)  
+    Password: str = Field(nullable=False)  
+    Points: int = Field(default=0)  
+    Mentors: List[str] = Field(sa_column=Column(JSON))
+    Images: List[str] = Field(sa_column=Column(JSON))
 
-class User(SQLModel, table=True):
-    ID: Optional[int] = Field(default=None, primary_key=True)
-    Name: str = Field(index=True, nullable=False)
-    Email: str = Field(index=True, nullable=False, unique=True)
-    Password: str = Field(nullable=False)
-    Points: Optional[int] = Field(default=None)
-    Role: RoleEnum = Field(sa_column=Column(SQLEnum(RoleEnum)))
-    Mentors: Optional[list] = Field(sa_column=Column(JSON), default=[])
-    TeamID: Optional[int] = Field(default=None)
 
 # Challenge table model
 class Challenge(SQLModel, table=True):

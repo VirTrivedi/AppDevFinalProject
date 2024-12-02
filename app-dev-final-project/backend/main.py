@@ -38,6 +38,7 @@ class Mentee(SQLModel, table=True):
     Mentors: List[str] = Field(sa_column=Column(JSON))
     Images: List[str] = Field(sa_column=Column(JSON))
 
+
 # Challenge table model
 class Challenge(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True, index=True)  
@@ -55,11 +56,11 @@ class Photo(SQLModel, table=True):
     TeamID: int = Field(ForeignKey("mentee.ID"), nullable=False)
 
     # Relationships
-    Challenge: Optional[Challenge] = Relationship()
-    Team: Optional[Mentee] = Relationship()
+    # Challenge: Relationship = Relationship()
+    # Team: Relationship = Relationship()
 
 class Week(SQLModel, table=True):
-    Published: AttendanceStatus = Field(nullable=False)
+    Published: AttendanceStatus = Field(nullable=False, primary_key=True)
     ID: int = Field(nullable=False)
     DateActive: datetime = Field(nullable=False)
 
@@ -69,10 +70,9 @@ sqlite_url = f"sqlite:///{sqlite_database_name}"
 # Allowing connections from multiple threads
 connect_args = {"check_same_thread": False}
 engine = create_engine(sqlite_url, connect_args=connect_args, echo=True)
+SQLModel.metadata.create_all(engine)
 
-#creating the session, the session communicates with the database
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+
 
 def get_session():
     with Session(engine) as session:
@@ -102,11 +102,11 @@ def on_startup():
     create_db_and_tables()
 
 # Example route: Get all mentees
-@app.get("/mentees")
+@app.get("/mentees") # successfully blank
 async def get_mentees(session: SessionDep):
     return session.exec(select(Mentee)).all()
 
-@app.get("/photos")
+@app.get("/photos") # failes
 def get_photos_with_relationships(session: SessionDep):
     photos = session.exec(
         select(Photo).options(
@@ -122,16 +122,23 @@ class MenteeCreate(BaseModel):
     password: str
 
 @app.post("/mentees/new")
-def create_mentee(mentee: MenteeCreate, session: SessionDep):
-    new_mentee = Mentee(Name=mentee.name, Email=mentee.email, Password=mentee.password)
+def create_mentee(mentee: Mentee, session: SessionDep): # works ehhhh
+    new_mentee = Mentee(
+        Name=mentee.Name,  # Changed from 'name' to 'Name'
+        Email=mentee.Email,  # Changed from 'email' to 'Email'
+        Password=mentee.Password,  # Changed from 'password' to 'Password'
+        Mentors=mentee.Mentors or [],  # If mentors is not provided, default to an empty list
+        Images=mentee.Images or [],  # Same for images
+    )
     session.add(new_mentee)
     try:
         session.commit()
-        session.refresh(new_mentee)
+        session.refresh(new_mentee)  # Refresh to get the latest data from the DB
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=400, detail="Error creating mentee. Email may already exist.")
-    return new_mentee
+    
+    return new_mentee  
 
 
 # Example route: Get all challenges
@@ -280,7 +287,7 @@ def get_all_weeks(session: SessionDep):
 
 @app.get("/weeks/{week_id}")
 def get_week_by_id(week_id: int, session: SessionDep):
-    week = session.get(Week, week_id)
+    week = session.query(Week).filter(Week.ID == week_id).first()
     if not week:
         raise HTTPException(status_code=404, detail="Week not found")
     return week

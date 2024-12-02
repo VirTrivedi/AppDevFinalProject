@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from sqlalchemy.orm import joinedload
 from enum import Enum
-import os
+import os 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
@@ -177,7 +177,7 @@ def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
     if not mentee:
         raise HTTPException(status_code=404, detail="Mentee not found")
     
-    # Assuming mentors are stored as a JSON array of names in the Mentors field
+    # Return JSON Array of mentors
     return mentee.Mentors
 
 # Get a specific mentee (user) by ID
@@ -286,8 +286,8 @@ def get_week_by_id(week_id: int, session: SessionDep):
     return week
 
 @app.post("/weeks")
-def create_week(id: int, date_active: datetime, session: SessionDep):
-    new_week = Week(ID=id, DateActive=date_active, Published="unpublished")
+def create_week(date_active: datetime, session: SessionDep):
+    new_week = Week(DateActive=date_active, Published="unpublished")
     session.add(new_week)
     try:
         session.commit()

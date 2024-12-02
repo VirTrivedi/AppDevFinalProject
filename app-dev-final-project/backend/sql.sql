@@ -4,8 +4,10 @@ CREATE TABLE user (
     Name VARCHAR(255) NOT NULL,
     Email VARCHAR(255) NOT NULL UNIQUE,
     Password VARCHAR(255) NOT NULL,
-    Points INT DEFAULT 0,
-    Role ENUM('mentee', 'admin') NOT NULL
+    Points INTEGER DEFAULT NULL,
+    Role ENUM('mentee', 'admin') NOT NULL,
+    Mentors JSON DEFAULT NULL,
+    TeamID INTEGER DEFAULT NULL
 );
 
 CREATE TABLE challenge (
@@ -27,7 +29,7 @@ CREATE TABLE photo (
 );
 
 CREATE TABLE week (
+    Published ENUM('published', 'unpublished') NOT NULL
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    StartDate DATETIME NOT NULL,
-    PublishedAttendence ENUM('published', 'unpublished') NOT NULL
+    DateActive DATETIME NOT NULL,
 );

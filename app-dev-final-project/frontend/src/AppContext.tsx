@@ -43,8 +43,6 @@ interface AppContextType {
   challenges: Challenge[];
   fetchChallenges: () => Promise<void>;
   getCurrentChallenge: () => Challenge | null;
-  photos: Photo[];
-  addPhoto: (photo: string, caption: string) => void;
   authenticateUser: (email: string, password: string) => Promise<boolean>;
   fetchMentees: () => Promise<void>;
   increasePoints: (menteeId: number, pointsToAdd: number) => Promise<void>;
@@ -70,14 +68,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [mentees, setMentees] = useState<Mentee[]>([]);
   const [mentors, setMentors] = useState<string[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [weeks, setWeeks] = useState<Week[]>([]);
-
-  // Add photo to the gallery
-  const addPhoto = (photo: string, caption: string) => {
-    setPhotos((prevPhotos) => [...prevPhotos, { photo, caption }]);
-  };
 
   // Authenticate user
   const authenticateUser = async (email: string, password: string): Promise<boolean> => {
@@ -217,8 +209,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         mentees,
         mentors,
         challenges,
-        photos,
-        addPhoto,
         authenticateUser,
         fetchMentees,
         fetchMentorsForMentee,

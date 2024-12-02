@@ -1,12 +1,12 @@
 
-CREATE TABLE user (
-    ID INT AUTO_INCREMENT PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL,
-    Email VARCHAR(255) NOT NULL UNIQUE,
-    Password VARCHAR(255) NOT NULL,
-    Points INT DEFAULT 0,
-    Images JSON DEFAULT '[]', 
-    Role ENUM('mentee', 'admin') NOT NULL
+CREATE TABLE mentee (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    Email TEXT NOT NULL UNIQUE,
+    Password TEXT NOT NULL,
+    Points INTEGER DEFAULT 0,
+    Images JSON DEFAULT '[]',
+    Role TEXT NOT NULL CHECK(Role IN ('mentee', 'admin'))
 );
 
 CREATE TABLE challenge (
@@ -17,9 +17,9 @@ CREATE TABLE challenge (
     PointsValue INTEGER NOT NULL
 );
 
-CREATE TABLE photo (
+CREATE TABLE IF NOT EXISTS photo (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    URL TEXT NOT NULL,
+    FileData BLOB NOT NULL,
     Status TEXT CHECK(Status IN ('pending', 'approved', 'denied')) DEFAULT 'pending',
     ChallengeID INTEGER NOT NULL,
     TeamID INTEGER NOT NULL,
@@ -31,5 +31,4 @@ CREATE TABLE week (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     StartDate DATETIME NOT NULL,
     PublishedAttendence ENUM('published', 'unpublished') NOT NULL
-);
 );

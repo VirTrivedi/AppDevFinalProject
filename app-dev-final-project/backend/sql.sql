@@ -17,9 +17,9 @@ CREATE TABLE challenge (
     PointsValue INTEGER NOT NULL
 );
 
-CREATE TABLE photo (
+CREATE TABLE IF NOT EXISTS photo (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    URL TEXT NOT NULL,
+    FileData BLOB NOT NULL,
     Status TEXT CHECK(Status IN ('pending', 'approved', 'denied')) DEFAULT 'pending',
     ChallengeID INTEGER NOT NULL,
     TeamID INTEGER NOT NULL,

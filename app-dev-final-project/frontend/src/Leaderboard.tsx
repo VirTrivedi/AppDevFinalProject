@@ -34,16 +34,18 @@ const Leaderboard: React.FC = () => {
                             />
                         )}
                     </div>
-                    <div className="user-info">
-                        <div
-                            className={`user-name ${
-                                person && participant.ID === person.ID ? "highlight" : ""
-                            }`}
-                        >
-                            {participant.name}
+                    {participant.points >= 0 && (
+                        <div className="user-info">
+                            <div
+                                className={`user-name ${
+                                    person && participant.ID === person.ID ? "highlight" : ""
+                                }`}
+                            >
+                                {participant.name}
+                            </div>
+                            <div className="user-score">{participant.points} pts</div>
                         </div>
-                        <div className="user-score">{participant.points} pts</div>
-                    </div>
+                    )}
                 </div>
             ))}
         </div>

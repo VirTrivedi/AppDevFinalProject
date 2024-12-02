@@ -68,9 +68,9 @@ class Photo(SQLModel, table=True):
     Team: Optional[User] = Relationship()
 
 class Week(SQLModel, table=True):
-    Published: AttendanceStatus = Field(nullable=False)
-    ID: int = Field(nullable=False)
-    DateActive: datetime = Field(nullable=False)
+    ID: Optional[int] = Field(default=None, primary_key=True) 
+    Published: AttendanceStatus = Field(nullable=False) 
+    DateActive: datetime = Field(nullable=False) 
 
 sqlite_database_name = "mentee_chal_data.db" 
 sqlite_url = f"sqlite:///{sqlite_database_name}"

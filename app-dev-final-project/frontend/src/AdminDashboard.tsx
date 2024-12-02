@@ -18,7 +18,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div style={styles.section}>
-        <Link to="/review">You have 12 photos pending review</Link>
+        <Link to="/media">You have 12 photos pending review</Link>
       </div>
 
       <div style={styles.section}>

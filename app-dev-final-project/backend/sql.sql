@@ -7,6 +7,7 @@ CREATE TABLE user (
     Role TEXT CHECK(Role IN ('mentee', 'admin')) NOT NULL,
     Mentors TEXT DEFAULT NULL,  -- Use TEXT to store JSON data
     TeamID INTEGER DEFAULT NULL
+    
 );
 
 CREATE TABLE challenge (

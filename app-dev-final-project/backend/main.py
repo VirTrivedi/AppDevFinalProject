@@ -94,6 +94,10 @@ SessionDep = Annotated[Session, Depends(get_session)]
 # Initialize FastAPI app
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"testing": "testing2"}
+
 origins = [
     "http://localhost",
     "http://localhost:5173",

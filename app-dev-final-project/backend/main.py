@@ -31,8 +31,12 @@ class AttendanceStatus(str, Enum):
     unpublished = "unpublished"
     published = "published"
 
+class RoleEnum(str, Enum):
+    admin = "admin"
+    mentee = "mentee"
+
 # Mentee table model
-class Mentee(SQLModel, table=True):
+class User(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True)  
     Name: str = Field(index=True, nullable=False)  
     Email: str = Field(index=True, nullable=False, unique=True)  
@@ -60,7 +64,7 @@ class Photo(SQLModel, table=True):
     TeamID: int = Field(ForeignKey("mentee.ID"), nullable=False)
 
     # Relationships
-    Challenge: Optional[Challenge] = Relationship()
+    Challenges: Optional[Challenge] = Relationship()
     Team: Optional[User] = Relationship()
 
 class Week(SQLModel, table=True):

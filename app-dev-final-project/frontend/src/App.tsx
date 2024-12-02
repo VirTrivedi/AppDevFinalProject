@@ -25,19 +25,23 @@ const App: React.FC = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route
           path="/dashboard"
-          element={isLoggedIn ? <Dashboard /> : <Navigate to="/" />}
+          // element={isLoggedIn ? <Dashboard /> : <Navigate to="/" />}
+          element={<Dashboard />}
         />
         <Route
           path="/leaderboard"
-          element={isLoggedIn ? <Leaderboard /> : <Navigate to="/" />}
+          // element={isLoggedIn ? <Leaderboard /> : <Navigate to="/" />}
+          element={<Leaderboard />}
         />
         <Route
           path="/photo-upload"
-          element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/" />}
+          // element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/" />}
+          element={<PhotoUpload />}
         />
         <Route
           path="/photos"
-          element={isLoggedIn ? <Photos /> : <Navigate to="/" />}
+          // element={isLoggedIn ? <Photos /> : <Navigate to="/" />}
+          element={<Photos />}
         />
         <Route
           path="/admin"
@@ -47,7 +51,7 @@ const App: React.FC = () => {
           path="/media"
           element={<MediaReview />}
         />
-        <Route
+        <Route 
           path="/attendance"
           element={<Attendance />}
         />

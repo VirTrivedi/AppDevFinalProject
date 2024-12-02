@@ -9,6 +9,8 @@ from datetime import datetime
 from sqlalchemy.orm import joinedload
 from enum import Enum
 import os
+from fastapi.responses import StreamingResponse
+import io
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
@@ -28,15 +30,20 @@ class AttendanceStatus(str, Enum):
     unpublished = "unpublished"
     published = "published"
 
-# Mentee table model
-class Mentee(SQLModel, table=True):
-    ID: Optional[int] = Field(default=None, primary_key=True)  
-    Name: str = Field(index=True, nullable=False)  
-    Email: str = Field(index=True, nullable=False, unique=True)  
-    Password: str = Field(nullable=False)  
-    Points: int = Field(default=0)  
-    Mentors: List[str] = Field(sa_column=Column(JSON))
-    Images: List[str] = Field(sa_column=Column(JSON))
+# User table model
+class RoleEnum(str, Enum):
+    mentee = "mentee"
+    admin = "admin"
+
+class User(SQLModel, table=True):
+    ID: Optional[int] = Field(default=None, primary_key=True)
+    Name: str = Field(index=True, nullable=False)
+    Email: str = Field(index=True, nullable=False, unique=True)
+    Password: str = Field(nullable=False)
+    Points: Optional[int] = Field(default=None)
+    Role: RoleEnum = Field(sa_column=Column(SQLEnum(RoleEnum)))
+    Mentors: Optional[list] = Field(sa_column=Column(JSON), default=[])
+    TeamID: Optional[int] = Field(default=None)
 
 # Challenge table model
 class Challenge(SQLModel, table=True):
@@ -49,14 +56,14 @@ class Challenge(SQLModel, table=True):
 # Photo table model
 class Photo(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True)
-    URL: str = Field(max_length=500, nullable=False)
+    FileData: bytes = Field(nullable=False)
     Status: PhotoStatus = Field(sa_column=SQLEnum(PhotoStatus), default=PhotoStatus.pending)
     ChallengeID: int = Field(ForeignKey("challenge.ID"), nullable=False)
     TeamID: int = Field(ForeignKey("mentee.ID"), nullable=False)
 
     # Relationships
     Challenge: Optional[Challenge] = Relationship()
-    Team: Optional[Mentee] = Relationship()
+    Team: Optional[User] = Relationship()
 
 class Week(SQLModel, table=True):
     Published: AttendanceStatus = Field(nullable=False)
@@ -102,19 +109,145 @@ def on_startup():
     create_db_and_tables()
 
 # Example route: Get all mentees
-@app.get("/mentees")
-async def get_mentees(session: SessionDep):
-    return session.exec(select(Mentee)).all()
+@app.get("/mentees", response_model=List[User])
+def get_all_mentees(session: Session = Depends(get_session)):
+    """Retrieve all users with the 'mentee' role."""
+    mentees_query = select(User).where(User.Role == RoleEnum.mentee)
+    mentees = session.exec(mentees_query).all()
+    if not mentees:
+        raise HTTPException(status_code=404, detail="No mentees found")
+    return mentees
 
-@app.get("/photos")
-def get_photos_with_relationships(session: SessionDep):
-    photos = session.exec(
-        select(Photo).options(
-            joinedload(Photo.Challenge),
-            joinedload(Photo.Team)
-        )
-    ).all()
+@app.post("/photos/new")
+def create_photo(
+    file: Annotated[UploadFile, Form(...)],
+    caption: Annotated[str, Form(...)],
+    challenge_id: Annotated[int, Form(...)],
+    team_id: Annotated[int, Form(...)],
+    session: SessionDep,
+):
+    # Validate challenge existence
+    challenge = session.get(Challenge, challenge_id)
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    
+    # Validate team existence
+    team = session.get(Mentee, team_id)
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    # Read the file's binary data
+    file_data = file.file.read()
+
+    # Create a new photo record
+    new_photo = Photo(
+        FileData=file_data,
+        Status=PhotoStatus.pending,
+        ChallengeID=challenge_id,
+        TeamID=team_id,
+    )
+    session.add(new_photo)
+
+    try:
+        session.commit()
+        session.refresh(new_photo)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error saving photo: {e}")
+
+    return {"message": "Photo uploaded successfully", "photo_id": new_photo.ID}
+
+@app.get("/photos/pending")
+def get_pending_photos(session: SessionDep):
+    photos = session.exec(select(Photo).where(Photo.Status == PhotoStatus.pending)).all()
+    if not photos:
+        raise HTTPException(status_code=404, detail="No pending photos found")
     return photos
+
+@app.get("/photos/approved")
+def get_approved_photos(session: SessionDep):
+    photos = session.exec(select(Photo).where(Photo.Status == PhotoStatus.approved)).all()
+    if not photos:
+        raise HTTPException(status_code=404, detail="No approved photos found")
+    return photos
+
+@app.delete("/photos/denied")
+def remove_denied_photos(session: SessionDep):
+    denied_photos = session.exec(select(Photo).where(Photo.Status == PhotoStatus.denied)).all()
+    if not denied_photos:
+        raise HTTPException(status_code=404, detail="No denied photos found")
+    
+    for photo in denied_photos:
+        session.delete(photo)
+    
+    session.commit()
+    return {"message": f"{len(denied_photos)} denied photos removed successfully"}
+
+@app.get("/photos/{photo_id}")
+def get_photo(photo_id: int, session: SessionDep):
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Return photo metadata and binary data
+    return {
+        "ID": photo.ID,
+        "Status": photo.Status,
+        "ChallengeID": photo.ChallengeID,
+        "TeamID": photo.TeamID,
+        "FileData": photo.FileData,  # Return binary data as base64 if needed
+    }
+
+@app.get("/photos/{photo_id}/download")
+def download_photo(photo_id: int, session: SessionDep):
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    # Stream the binary data as a file
+    return StreamingResponse(
+        io.BytesIO(photo.FileData),
+        media_type="image/jpeg",  # Or "image/png" based on file type
+        headers={"Content-Disposition": f"attachment; filename=photo_{photo_id}.jpg"},
+    )
+
+@app.put("/photos/{photo_id}/approve")
+def approve_photo(photo_id: int, session: SessionDep):
+    # Retrieve the photo by ID
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Check if the photo status is 'pending'
+    if photo.Status != PhotoStatus.pending:
+        raise HTTPException(status_code=400, detail="Only pending photos can be approved")
+    
+    # Update the status to 'approved'
+    photo.Status = PhotoStatus.approved
+    session.add(photo)
+    session.commit()
+    session.refresh(photo)
+
+    return {"message": f"Photo ID {photo_id} has been approved", "photo": photo}
+
+@app.put("/photos/{photo_id}/deny")
+def deny_photo(photo_id: int, session: SessionDep):
+    # Retrieve the photo by ID
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Check if the photo status is 'pending'
+    if photo.Status != PhotoStatus.pending:
+        raise HTTPException(status_code=400, detail="Only pending photos can be denied")
+    
+    # Update the status to 'denied'
+    photo.Status = PhotoStatus.denied
+    session.add(photo)
+    session.commit()
+    session.refresh(photo)
+
+    return {"message": f"Photo ID {photo_id} has been denied", "photo": photo}
 
 class MenteeCreate(BaseModel):
     name: str
@@ -122,16 +255,31 @@ class MenteeCreate(BaseModel):
     password: str
 
 @app.post("/mentees/new")
-def create_mentee(mentee: MenteeCreate, session: SessionDep):
-    new_mentee = Mentee(Name=mentee.name, Email=mentee.email, Password=mentee.password)
-    session.add(new_mentee)
+def create_mentee(mentee_data: MenteeCreate, session: Session = Depends(get_session)):
+    """Create a new user with default points and role set to 'mentee'."""
+    # Check if email already exists
+    existing_user = session.exec(select(User).where(User.Email == mentee_data.Email)).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Create a new user
+    new_user = User(
+        Name=mentee_data.Name,
+        Email=mentee_data.Email,
+        Password=mentee_data.Password,  # Ideally, hash the password before storing
+        Points=0,
+        Role=RoleEnum.mentee
+    )
+    session.add(new_user)
+
     try:
         session.commit()
-        session.refresh(new_mentee)
+        session.refresh(new_user)
     except Exception as e:
         session.rollback()
-        raise HTTPException(status_code=400, detail="Error creating mentee. Email may already exist.")
-    return new_mentee
+        raise HTTPException(status_code=400, detail=f"Error creating user: {e}")
+
+    return {"message": "User created successfully", "user_id": new_user.ID}
 
 
 # Example route: Get all challenges
@@ -146,12 +294,12 @@ def get_challenges_ordered(session: SessionDep):
 
 # Example route: Create a new challenge
 @app.post("/challenges/new")
-def create_challenge(description: str, points_value: int, start_date: datetime, end_date: datetime, session: SessionDep):
+def create_challenge(description: str, start_date: datetime, end_date: datetime, points_value: int, session: SessionDep):
     new_challenge = Challenge(
         Description=description,
-        PointsValue=points_value,
         StartDate=start_date,
-        EndDate=end_date
+        EndDate=end_date,
+        PointsValue=points_value
     )
     session.add(new_challenge)
     try:
@@ -164,16 +312,16 @@ def create_challenge(description: str, points_value: int, start_date: datetime, 
 
 @app.delete("/mentees/{mentee_id}")
 def delete_mentee(mentee_id: int, session: SessionDep):
-    mentee = session.get(Mentee, mentee_id)
+    mentee = session.get(User, mentee_id)
     if not mentee:
-        raise HTTPException(status_code=404, detail="Hero not found")
+        raise HTTPException(status_code=404, detail="Mentee not found")
     session.delete(mentee)
     session.commit()
     return {"ok": True}
 
 @app.get("/mentors/{mentee_id}")
 def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
-    mentee = session.get(Mentee, mentee_id)
+    mentee = session.get(User, mentee_id)
     if not mentee:
         raise HTTPException(status_code=404, detail="Mentee not found")
     
@@ -183,7 +331,7 @@ def get_mentors_by_mentee(mentee_id: int, session: SessionDep):
 # Get a specific mentee (user) by ID
 @app.get("/users/{user_id}")
 def get_user_by_id(user_id: int, session: SessionDep):
-    user = session.get(Mentee, user_id)
+    user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -194,11 +342,11 @@ security = HTTPBasic()
 @app.post("/users/authenticate")
 def authenticate_user(credentials: HTTPBasicCredentials, session: SessionDep):
     # Extract the username and password from the credentials
-    username = credentials.username
+    email = credentials.username
     password = credentials.password
 
     # Query the database for a user with the given username
-    user = session.exec(select(Mentee).where(Mentee.Email == username)).first()
+    user = session.exec(select(User).where(User.Email == email)).first()
 
     # Check if the user exists and the password matches
     if not user or user.Password != password:
@@ -206,41 +354,56 @@ def authenticate_user(credentials: HTTPBasicCredentials, session: SessionDep):
 
     return user
 
-@app.put("/mentees/{mentee_id}/increase_points")
-def increase_points_by_mentee(mentee_id: int, points_to_add: int, session: SessionDep):
- 
-   mentee = session.get(Mentee, mentee_id)
-   if not mentee:
-       raise HTTPException(status_code=404, detail="Mentee not found")
-  
-   mentee.Points += points_to_add
-  
-   session.add(mentee)
-   session.commit()
-   session.refresh(mentee)
-  
-   return {"id": mentee.ID, "name": mentee.Name, "updated_points": mentee.Points}
-
-
-@app.put("/mentors/{mentor_name}/increase_points")
-def increase_points_by_group(mentor_name: str, points_to_add: int, session: SessionDep):
+@app.put("/users/{user_id}/points", status_code=200)
+def increase_user_points(user_id: int, points_to_add: int, session: Session = Depends(get_session)):
+    """
+    Increase a user's points by a specified amount based on their user ID.
     
-    # Retrieve all mentees who have the specified mentor
-    mentees = list(session.exec(select(Mentee).where(Mentee.Mentors.contains(mentor_name))))
+    Args:
+        user_id: ID of the user to update.
+        points_to_add: Number of points to add.
+        session: Database session dependency.
+    Returns:
+        JSON response with the updated user's ID and new points total.
+    """
+    # Fetch the user by ID
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    if not mentees:
-        raise HTTPException(status_code=404, detail="No mentees found with the specified mentor")
+    # Update the user's points
+    user.Points += points_to_add
+    session.add(user)
 
-    # Update the points for each mentee
-    for mentee in mentees:
-        mentee.Points += points_to_add
-        session.add(mentee)
+    try:
+        session.commit()
+        session.refresh(user)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error updating points: {e}")
 
-    # Commit the changes
+    return {"message": "User points updated successfully", "user_id": user.ID, "new_points": user.Points}
+
+@app.put("/users/team/{team_id}/increase_points")
+def increase_team_points(team_id: int, points_to_add: int, session: SessionDep):
+    # Fetch all users with the specified TeamID
+    users = session.exec(select(User).where(User.TeamID == team_id)).all()
+    if not users:
+        raise HTTPException(status_code=404, detail="No users found with the specified TeamID")
+
+    # Update points for each user
+    for user in users:
+        if user.Points is None:
+            user.Points = 0
+        user.Points += points_to_add
+        session.add(user)
+
     session.commit()
-    
-    return {"updated_mentees": [{"id": m.ID, "name": m.Name, "updated_points": m.Points} for m in mentees]}
 
+    return {
+        "message": f"Points updated successfully for {len(users)} users in team {team_id}.",
+        "updated_users": [{"ID": user.ID, "Name": user.Name, "UpdatedPoints": user.P} for user in users]
+    }
 
 # below: google sheet stuff
 async def get_google_sheet_data(week_num: int):

@@ -80,6 +80,20 @@ class Week(SQLModel, table=True):
     Published: AttendanceStatus = Field(nullable=False)  # Stored as strings in SQLite
     DateActive: datetime = Field(nullable=False)
 
+# Pydantic models for response validation
+class UserOut(BaseModel):
+    ID: int
+    Name: str
+    Email: str
+    Points: int
+    Mentors: Optional[List[str]] = None
+    Images: Optional[List[str]] = None
+    Role: RoleEnum
+
+    class Config:
+        orm_mode = True  # This tells Pydantic to treat ORM models as dictionaries
+
+
 sqlite_database_name = "mentee_chal_data.db" 
 sqlite_url = f"sqlite:///{sqlite_database_name}"
 
@@ -91,6 +105,9 @@ engine = create_engine(sqlite_url, connect_args=connect_args, echo=True)
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
+
+
+
 def get_session():
     with Session(engine) as session:
         yield session
@@ -101,6 +118,8 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 # Initialize FastAPI app
 app = FastAPI()
+
+app.add_event_handler("startup", create_db_and_tables)
 
 @app.get("/")
 def read_root():
@@ -119,18 +138,77 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def on_startup():
     create_db_and_tables()
 
-# Example route: Get all mentees
-@app.get("/mentees", response_model=List[User])
+# # Example route: Get all mentees
+# @app.get("/mentees", response_model=List[User])
+# def get_all_mentees(session: Session = Depends(get_session)):
+#     mentees_query = select(User).where(User.Role == RoleEnum.mentee)
+#     mentees = session.exec(mentees_query).all()
+#     if not mentees:
+#         raise HTTPException(status_code=404, detail="No mentees found")
+#     return mentees
+
+from pydantic import BaseModel
+from typing import List
+
+# Define the output schema
+class UserOut(BaseModel):
+    ID: int
+    Name: str
+    Email: str
+    Points: int
+    Mentors: List[str]
+    Images: List[str]
+    Role: RoleEnum
+
+@app.get("/mentees", response_model=List[UserOut])
 def get_all_mentees(session: Session = Depends(get_session)):
-    """Retrieve all users with the 'mentee' role."""
     mentees_query = select(User).where(User.Role == RoleEnum.mentee)
-    mentees = session.exec(mentees_query).all()
+    mentees = session.exec(mentees_query).scalars().all()  # Use scalars() to get ORM objects
+
     if not mentees:
         raise HTTPException(status_code=404, detail="No mentees found")
-    return mentees
+
+    # Transform ORM objects into Pydantic models
+    mentees_out = [
+        UserOut(
+            ID=mentee.ID,
+            Name=mentee.Name,
+            Email=mentee.Email,
+            Points=mentee.Points,
+            Mentors=mentee.Mentors or [],
+            Images=mentee.Images or [],
+            Role=mentee.Role,
+        )
+        for mentee in mentees
+    ]
+    return mentees_out
+
+
+@app.get("/mentees/{mentee_id}", response_model=UserOut)
+def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):
+    # Query the database for the mentee with the specified ID
+    mentee = session.get(User, mentee_id)  # Use session.get() to fetch by primary key
+    
+    if not mentee or mentee.Role != RoleEnum.mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
+
+    # Return the mentee as a Pydantic model
+    mentee_out = UserOut(
+        ID=mentee.ID,
+        Name=mentee.Name,
+        Email=mentee.Email,
+        Points=mentee.Points,
+        Mentors=mentee.Mentors or [],
+        Images=mentee.Images or [],
+        Role=mentee.Role,
+    )
+    return mentee_out
+
+
 
 @app.post("/photos/new")
 def create_photo(

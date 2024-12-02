@@ -70,6 +70,8 @@ class Photo(SQLModel, table=True):
     ChallengeID: int = Field(foreign_key="challenge.ID", nullable=False)
     TeamID: int = Field(foreign_key="user.ID", nullable=False)
 
+#date/week field could be added -- 
+
     # Relationships
     Challenges: Optional[Challenge] = Relationship(back_populates="Photos")
     Team: Optional[User] = Relationship(back_populates="Photos")
@@ -104,8 +106,6 @@ engine = create_engine(sqlite_url, connect_args=connect_args, echo=True)
 #creating the session, the session communicates with the database
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
-
-
 
 
 def get_session():

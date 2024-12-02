@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import axios, { AxiosResponse } from "axios";
+import './App.css'
 
 // Types for your data
-interface Photo {
+export interface Photo {
   url: string;  // URL of the photo
   caption: string; // Optional caption for the photo
   status: 'pending' | 'approved' | 'rejected';  // Current status of the photo
@@ -74,10 +75,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Authenticate user
   const authenticateUser = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/users/authenticate`, {}, {
-        auth: { username: email, password },
-      });
-      setPerson(response.data); // Store authenticated person
+      const response = await fetch(`${API_BASE_URL}/users/authenticate`)
+      if(!response.ok){
+        throw new Error(`Error: ${response.statusText}`);
+      }
+
+      const data: Mentee[] = await response.json()
+      setMentees(data); // Store authenticated person
+
       setIsLoggedIn(true);
       return true;
     } catch (error) {

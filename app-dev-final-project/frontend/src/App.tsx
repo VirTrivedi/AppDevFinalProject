@@ -51,6 +51,10 @@ const App: React.FC = () => {
           path="/attendance"
           element={<Attendance />}
         />
+         <Route
+          path="/management"
+          element={<UserManagement />}
+        />
       </Routes>
     </Router>
   );

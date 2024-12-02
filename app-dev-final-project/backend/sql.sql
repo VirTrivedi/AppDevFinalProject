@@ -26,3 +26,10 @@ CREATE TABLE photo (
     FOREIGN KEY (ChallengeID) REFERENCES challenge(ID) ON DELETE CASCADE,
     FOREIGN KEY (TeamID) REFERENCES mentee(ID) ON DELETE CASCADE
 );
+
+CREATE TABLE week (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    StartDate DATETIME NOT NULL,
+    PublishedAttendence ENUM('published', 'unpublished') NOT NULL
+);
+);

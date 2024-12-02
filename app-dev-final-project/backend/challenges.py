@@ -19,16 +19,6 @@ challengesData = [
     ("Take a picture of your team wearing the same color", datetime(2024,12,1), datetime(2024,12,7), 50)
 ]
 
-# Convert string dates to proper format and prepare for insertion
-formattedChallenges = [
-    (
-        data[0],  # Description
-        datetime.strptime(data[1], "%Y-%m-%d"),  # StartDate
-        datetime.strptime(data[2], "%Y-%m-%d"),  # EndDate
-        data[3]   # PointsValue
-    )
-    for data in challengesData
-]
 
 # Optional: Clear existing challenges for a clean insert
 cur.execute("DELETE FROM challenge")
@@ -36,7 +26,7 @@ cur.execute("DELETE FROM challenge")
 # Insert updated challenge data
 cur.executemany(
     "INSERT INTO challenge (Description, StartDate, EndDate, PointsValue) VALUES (?,?,?,?)",
-    formattedChallenges
+    challengesData
 )
 
 # Commit changes and close the connection

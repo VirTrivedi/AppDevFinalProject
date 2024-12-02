@@ -21,7 +21,7 @@ weekData = [
 
 # Insert updated week data
 cur.executemany(
-    "INSERT INTO user (Name, Email, Password, Points, Role) VALUES (?,?)",
+    "INSERT INTO user (StartDate, PublishedAttendence) VALUES (?,?)",
     weekData
 )
 

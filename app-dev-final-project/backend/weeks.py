@@ -5,23 +5,33 @@ from datetime import datetime
 con = sqlite3.connect('mentee_chal_data.db')
 cur = con.cursor()
 
+# Recreate the week table to ensure the ID is auto-incrementing
+cur.execute('DROP TABLE IF EXISTS week;')
+cur.execute('''
+CREATE TABLE IF NOT EXISTS week (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Published TEXT CHECK(Published IN ('published', 'unpublished')) NOT NULL,
+    DateActive DATETIME NOT NULL
+)
+''')
+
+# Week data to insert
 weekData = [
-    (datetime(2024,9,22), 'unpublished'),
-    (datetime(2024,9,29), 'unpublished'),
-    (datetime(2024,10,6), 'unpublished'),
-    (datetime(2024,10,13), 'unpublished'),
-    (datetime(2024,10,20), 'unpublished'),
-    (datetime(2024,10,27), 'unpublished'),
-    (datetime(2024,11,3), 'unpublished'),
-    (datetime(2024,11,10), 'unpublished'),
-    (datetime(2024,11,17), 'unpublished'),
-    (datetime(2024,12,1), 'unpublished')
+    ('unpublished', datetime(2024, 9, 22).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 9, 29).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 10, 6).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 10, 13).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 10, 20).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 10, 27).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 11, 3).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 11, 10).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 11, 17).strftime('%Y-%m-%d %H:%M:%S')),
+    ('unpublished', datetime(2024, 12, 1).strftime('%Y-%m-%d %H:%M:%S'))
 ]
 
-
-# Insert updated week data
+# Insert the week data into the week table
 cur.executemany(
-    "INSERT INTO user (StartDate, PublishedAttendence) VALUES (?,?)",
+    "INSERT INTO week (Published, DateActive) VALUES (?, ?)",
     weekData
 )
 

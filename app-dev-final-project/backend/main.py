@@ -1,13 +1,13 @@
 from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, ForeignKey, Enum as SQLEnum
+from sqlalchemy import select, ForeignKey, Enum, Column
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from datetime import datetime
 from sqlalchemy.orm import joinedload
-from enum import Enum
+from enum import Enum as PyEnum
 import os
 from fastapi.responses import StreamingResponse
 import io
@@ -21,56 +21,64 @@ load_dotenv()
 SERVICE_ACCOUNT_FILE = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
-# Enum for photo status
-class PhotoStatus(str, Enum):
+# Enums
+class PhotoStatus(PyEnum):
     pending = "pending"
     approved = "approved"
     denied = "denied"
 
-class AttendanceStatus(str, Enum):
+class AttendanceStatus(PyEnum):
     unpublished = "unpublished"
     published = "published"
 
-class RoleEnum(str, Enum):
-    admin = "admin"
+class RoleEnum(PyEnum):
     mentee = "mentee"
+    mentor = "mentor"
 
-# Mentee table model
+# User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
-    ID: Optional[int] = Field(default=None, primary_key=True)  
-    Name: str = Field(index=True, nullable=False)  
-    Email: str = Field(index=True, nullable=False, unique=True)  
-    Password: str = Field(nullable=False)  
-    Points: int = Field(default=0)  
-    Mentors: List[str] = Field(sa_column=Column(JSON))
-    Images: List[str] = Field(sa_column=Column(JSON))
+    __tablename__ = "user"
+    ID: Optional[int] = Field(default=None, primary_key=True)
+    Name: str = Field(index=True, nullable=False)
+    Email: str = Field(index=True, nullable=False, unique=True)
+    Password: str = Field(nullable=False)
+    Points: int = Field(default=0)
+    Mentors: List[str] = Field(sa_column=Column(JSON))  # Optional JSON for mentor mapping
+    Images: List[str] = Field(sa_column=Column(JSON))  # Optional JSON for uploaded images
+    Role: RoleEnum = Field(default=RoleEnum.mentee)  # Stored as strings in SQLite
 
+    # Relationships
+    Photos: List["Photo"] = Relationship(back_populates="Team")
 
-# Challenge table model
+# Challenge Model
 class Challenge(SQLModel, table=True):
-    ID: Optional[int] = Field(default=None, primary_key=True, index=True)  
-    Description: str = Field(nullable=False)  
-    StartDate: datetime = Field(nullable=False)  
+    ID: Optional[int] = Field(default=None, primary_key=True, index=True)
+    Description: str = Field(nullable=False)
+    StartDate: datetime = Field(nullable=False)
     EndDate: datetime = Field(nullable=False)
     PointsValue: int = Field(nullable=False)
 
-# Photo table model
+    # Relationships
+    Photos: List["Photo"] = Relationship(back_populates="Challenges")
+
+# Photo Model
 class Photo(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True)
     FileData: bytes = Field(nullable=False)
     Caption: str = Field(nullable=False, max_length=500)
-    Status: PhotoStatus = Field(sa_column=SQLEnum(PhotoStatus), default=PhotoStatus.pending)
-    ChallengeID: int = Field(ForeignKey("challenge.ID"), nullable=False)
-    TeamID: int = Field(ForeignKey("mentee.ID"), nullable=False)
+    Status: PhotoStatus = Field(default=PhotoStatus.pending)  # Stored as strings in SQLite
+    ChallengeID: int = Field(foreign_key="challenge.ID", nullable=False)
+    TeamID: int = Field(foreign_key="user.ID", nullable=False)
 
     # Relationships
-    Challenges: Optional[Challenge] = Relationship()
-    Team: Optional[User] = Relationship()
+    Challenges: Optional[Challenge] = Relationship(back_populates="Photos")
+    Team: Optional[User] = Relationship(back_populates="Photos")
 
+# Week Model
 class Week(SQLModel, table=True):
-    ID: Optional[int] = Field(default=None, primary_key=True) 
-    Published: AttendanceStatus = Field(nullable=False) 
-    DateActive: datetime = Field(nullable=False) 
+    ID: Optional[int] = Field(default=None, primary_key=True)
+    Published: AttendanceStatus = Field(nullable=False)  # Stored as strings in SQLite
+    DateActive: datetime = Field(nullable=False)
 
 sqlite_database_name = "mentee_chal_data.db" 
 sqlite_url = f"sqlite:///{sqlite_database_name}"

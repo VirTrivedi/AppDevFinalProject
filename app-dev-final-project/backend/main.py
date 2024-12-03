@@ -266,6 +266,27 @@ def get_user_by_id(user_id: int, session: Session = Depends(get_session)):
     )
     return mentee_out
 
+@app.get("/users/team/{team_id}", response_model=List[UserOut])
+def get_users_by_team(team_id: int, session: Session = Depends(get_session)):
+    # Query the database for all users with the given TeamID
+    users = session.exec(select(User).where(User.TeamID == team_id)).all()
+
+    if not users:
+        raise HTTPException(status_code=404, detail="No users found for this team")
+
+    # Return the users as a list of UserOut
+    return [
+        UserOut(
+            ID=user.ID,
+            Name=user.Name,
+            Email=user.Email,
+            Points=user.Points,
+            Mentors=user.Mentors or [],
+            Images=user.Images or [],
+            Role=user.Role,
+        )
+        for user in users
+    ]
 
 @app.delete("/mentees/{mentee_id}", response_model=dict)
 def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):

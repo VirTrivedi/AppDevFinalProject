@@ -34,7 +34,7 @@ class AttendanceStatus(PyEnum):
 
 class RoleEnum(PyEnum):
     mentee = "mentee"
-    mentor = "mentor"
+    admin = "admin"
 
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
@@ -749,12 +749,11 @@ def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_
         raise HTTPException(status_code=400, detail="Missing required fields")
 
     # Query the database for a user with the given email
-    user = session.exec(select(User).where(User.Email == email)).first()
+    user = session.exec(select(User).where(User.Email == email)).scalars().first()
+    print(user)
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-
 
     # Simple password check (no hashing for now)
     if user.Password != password:

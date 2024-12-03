@@ -592,35 +592,31 @@ def update_week_status(week_id: int, published_status: AttendanceStatus, session
 
 
 
-security = HTTPBasic()
+class AuthRequest(BaseModel):
+    email: str
+    password: str
 
-@app.post("/users/authenticate")
-def authenticate_user(credentials: HTTPBasicCredentials, session: Session = Depends(get_session), response_model=dict):
-    email = credentials.username
-    password = credentials.password
+
+@app.post("/users/authenticate", response_model=UserOut)
+def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_session)):
+    # Extract email and password from the request body
+    email = auth_request.email
+    password = auth_request.password
+
     if not all([email, password]):
         raise HTTPException(status_code=400, detail="Missing required fields")
 
     # Query the database for a user with the given email
     user = session.exec(select(User).where(User.Email == email)).first()
- 
-    print(user.__dict__) 
-    if user:
-        password = user.Password  # Access the 'Password' column directly
-        print(password)
-    else:
-        print("User not found.")
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-
 
     # Simple password check (no hashing for now)
     if user.Password != password:
         raise HTTPException(status_code=400, detail="Incorrect password")
-    
-    # Convert the User model to UserOut to return specific fields
+
+    # Convert the User model to UserOut to return only the required fields
     return UserOut(
         ID=user.ID,
         Name=user.Name,
@@ -630,11 +626,3 @@ def authenticate_user(credentials: HTTPBasicCredentials, session: Session = Depe
         Images=user.Images or [],
         Role=user.Role
     )
-
-    # if user_out.Password != password:  # Make sure to hash and compare passwords in production
-    #     raise HTTPException(status_code=401, detail="Invalid username or password")
-
-    # return {
-    #     "message": "User authenticated successfully",
-    #     "user_id": user_out.ID  # Accessing the ID directly from the user object
-    # }

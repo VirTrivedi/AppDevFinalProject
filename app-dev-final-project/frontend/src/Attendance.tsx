@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useAppContext } from "./AppContext";
 
 const Attendance = () => {
   const { fetchAttendanceData, weeks, publishWeek, fetchWeeks } = useAppContext();

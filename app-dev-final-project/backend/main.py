@@ -2,7 +2,7 @@ import base64
 from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, ForeignKey, Enum, Column, SQLAlchemyError
+from sqlalchemy import select, ForeignKey, Enum, Column
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials

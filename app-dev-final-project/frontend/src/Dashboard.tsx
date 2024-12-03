@@ -97,7 +97,7 @@ const Dashboard: React.FC = () => {
   }, [teamID, person]);
 
   // Sort teammates
-  const sortedTeammates = [...teammates].sort((a, b) => a.Name.localeCompare(b.Name));
+  const sortedTeammates = [...teammates].sort((a, b) => b.Points - a.Points);
   const sortedMentors = [...mentors].sort((a, b) => a.localeCompare(b));
 
   const handleLogout = () => {

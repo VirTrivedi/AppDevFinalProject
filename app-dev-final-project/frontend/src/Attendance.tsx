@@ -54,6 +54,7 @@ const Attendance = () => {
   
   // Handle the click event to publish a week
   const handleClick = async (weekId: number, index: number) => {
+    console.log("rrrrr")
     if (!attendanceData[index]) {
       try {
         await publishWeek(weekId);

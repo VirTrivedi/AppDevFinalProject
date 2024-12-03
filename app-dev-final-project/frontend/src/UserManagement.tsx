@@ -76,7 +76,6 @@ const UserManagement = () => {
                         }))
                     }
                 />
-                {/* Add other fields as needed */}
                 <button onClick={handleAddMentee}>Add Mentee</button>
             </div>
         </div>

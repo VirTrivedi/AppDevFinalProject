@@ -70,7 +70,7 @@ class UserOut(BaseModel):
     Mentors: Optional[List[str]] = None
     Images: Optional[List[str]] = None
     Role: RoleEnum
-    TeamID: int
+    TeamID: Optional[int]
 
     class Config:
         orm_mode = True  # This tells Pydantic to treat ORM models as dictionaries
@@ -206,13 +206,12 @@ def on_startup():
 @app.get("/mentees", response_model=List[UserOut])
 def get_all_mentees(session: Session = Depends(get_session)):
     mentees_query = select(User).where(User.Role == RoleEnum.mentee)
-    mentees = session.exec(mentees_query).scalars().all()  # Use scalars() to get ORM objects
+    mentees = session.exec(mentees_query).scalars().all()  # Use scalars() to retrieve ORM objects
 
     if not mentees:
-        raise HTTPException(status_code=404, detail="No mentees found")
+        raise HTTPException(status_code=404, detail=f"No mentees found for team")
 
-    # Transform ORM objects into Pydantic models
-    mentees_out = [
+    return [
         UserOut(
             ID=mentee.ID,
             Name=mentee.Name,
@@ -220,13 +219,12 @@ def get_all_mentees(session: Session = Depends(get_session)):
             Points=mentee.Points,
             Mentors=mentee.Mentors or [],
             Images=mentee.Images or [],
-            Role=mentee.Role,
+            Role=mentee.Role,            
             TeamID=mentee.TeamID
+
         )
         for mentee in mentees
     ]
-    return mentees_out
-
 
 @app.get("/mentees/{mentee_id}", response_model=UserOut)
 def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):

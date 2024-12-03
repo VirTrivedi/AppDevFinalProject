@@ -14,7 +14,6 @@ import Login from './Login';
 import SignUp from './SignUp';
 
 const App: React.FC = () => {
-
   return (
     <Router>
       <Routes>

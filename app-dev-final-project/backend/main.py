@@ -37,6 +37,7 @@ class RoleEnum(PyEnum):
 
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
+
     __tablename__ = "user"
     ID: Optional[int] = Field(default=None, primary_key=True)
     Name: str = Field(index=True, nullable=False)
@@ -46,6 +47,7 @@ class User(SQLModel, table=True):
     Mentors: List[str] = Field(sa_column=Column(JSON))  # Optional JSON for mentor mapping
     Images: List[str] = Field(sa_column=Column(JSON))  # Optional JSON for uploaded images
     Role: RoleEnum = Field(default=RoleEnum.mentee)  # Stored as strings in SQLite
+    TeamID: int = Field(default=None)
 
     # Relationships
     Photos: List["Photo"] = Relationship(back_populates="Users")
@@ -190,6 +192,7 @@ def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):
 
     # Return the mentee as a Pydantic model
     mentee_out = UserOut(
+
         ID=mentee.ID,
         Name=mentee.Name,
         Email=mentee.Email,
@@ -197,6 +200,7 @@ def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):
         Mentors=mentee.Mentors or [],
         Images=mentee.Images or [],
         Role=mentee.Role,
+
     )
     return mentee_out
 
@@ -258,6 +262,7 @@ def get_user_by_id(user_id: int, session: Session = Depends(get_session)):
         Mentors=mentee.Mentors or [],
         Images=mentee.Images or [],
         Role=mentee.Role,
+        TeamID=mentee.TeamID
     )
     return mentee_out
 
@@ -333,23 +338,15 @@ def get_all_weeks(session: Session = Depends(get_session)):  # Adjust if needed 
 
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
 
-
-
-
-
-
-
-
-
-
-
 @app.post("/photos/new")
 def create_photo(
+
     file: Annotated[UploadFile, Form(...)],
     caption: Annotated[str, Form(...)],
     challenge_id: Annotated[int, Form(...)],
     team_id: Annotated[int, Form(...)],
     session: SessionDep
+
 ):
     # Validate ChallengeID
     challenge = session.get(Challenge, challenge_id)
@@ -652,6 +649,8 @@ def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+
 
     # Simple password check (no hashing for now)
     if user.Password != password:

@@ -14,7 +14,6 @@ const Leaderboard: React.FC = () => {
     const API_BASE_URL = 'http://127.0.0.1:8000';
 
 
-
     // Fetch mentees from the backend
     const fetchMentees = async () => {
         try {
@@ -43,11 +42,17 @@ const Leaderboard: React.FC = () => {
     
     return (
       <div style={styles.leaderboardContainer}>
+        <img
+            src="/images/leaderboardbg.png"
+            alt="background" 
+            style={styles.background}
+            />
+          
          <div style={styles.header}>
-        <nav style={styles.navbar}>
-          <img src="/images/computer-icon.png"
-          alt="Computer Icon" style={styles.icon}
-          />
+             <nav style={styles.navbar}>
+                <img src="/images/computer-icon.png"
+                     alt="Computer Icon" style={styles.icon}
+                     />
           <Link
             to="/dashboard"
             style={
@@ -86,7 +91,6 @@ const Leaderboard: React.FC = () => {
           </Link>
         </nav>
       </div>
-        <h1 style={styles.leaderboardTitle}>BOOTCAMP LEADERBOARD</h1>
   
         <div style={styles.leaderboardList}>
           {allParticipants.map((participant, index) => (
@@ -144,6 +148,26 @@ export default Leaderboard;
 const styles: {
   [key: string]: React.CSSProperties;
 } = {
+    background: {
+        width: "100%",
+        height: "100%",
+        zIndex: -1,
+    },
+    leaderboardContainer: {
+        width: "100vw",
+        minHeight: "100vh",
+        margin: 0,
+        padding: 0,
+        background: "transparent",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+     },
+    icon: {
+        marginRight: "10px",
+        width: "80px",
+    },
   navbar: {
     display: "flex",
     justifyContent: "space-around",
@@ -175,6 +199,7 @@ const styles: {
       // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
       // border: "solid 2px white",
       transition: "transform 250ms",
+      fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif",
     },
     linkHover1: {
       backgroundColor: "transparent",
@@ -195,39 +220,11 @@ const styles: {
       marginRight: "10px",
       width: "85%",
       },
-  icon: {
-      marginRight: "10px",
-      width: "80px",
-  },
+   
   iconImage: {
       alignItems: "center",
       display: "absolute",
       width: "100%",
-  },
-      leaderboardContainer: {
-      width: "100vw",
-      minHeight: "100vh",
-      margin: 0,
-      padding: 0,
-      background: "linear-gradient(to bottom, rgba(121,112,235,1) 0%, rgba(175,130,204,1) 55%, rgba(214,112,207,1) 94%, rgba(214,112,207,1) 100%)",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      textAlign: "center",
-   },
-  leaderboardTitle: {
-    width: "40%",
-    background: "linear-gradient(180deg, #dfd695, #FEA85F, #fc7e80)",
-    color: "#2f2f2f",
-    padding: "20px 0",
-    height: "13vh",
-    margin: "0",
-    fontWeight: "bold",
-    letterSpacing: "4px",
-    borderRadius: "20px",
-    boxShadow: "8px 10px 15px -6px rgb(99, 61, 99)",
-    fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif",
-    marginTop: "88px",
   },
   leaderboardList: {
     width: "90%",
@@ -303,12 +300,15 @@ const styles: {
     borderRadius: "15px",
     boxShadow: "8px 10px 15px -6px rgb(99, 61, 99)",
     fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif",
+    position: "absolute",
+    top: "80%",
   },
   infoBoxHeader: {
     fontSize: "24px",
     fontWeight: "bold",
     color: "#004d61",
     marginBottom: "10px",
+    
   },
   infoBoxText: {
     fontSize: "16px",

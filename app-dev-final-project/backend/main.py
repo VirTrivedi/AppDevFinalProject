@@ -37,6 +37,7 @@ class RoleEnum(PyEnum):
 
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
+
     __tablename__ = "user"
     ID: Optional[int] = Field(default=None, primary_key=True)
     Name: str = Field(index=True, nullable=False)
@@ -192,6 +193,7 @@ def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):
 
     # Return the mentee as a Pydantic model
     mentee_out = UserOut(
+
         ID=mentee.ID,
         Name=mentee.Name,
         Email=mentee.Email,
@@ -199,6 +201,7 @@ def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):
         Mentors=mentee.Mentors or [],
         Images=mentee.Images or [],
         Role=mentee.Role,
+
     )
     return mentee_out
 
@@ -260,6 +263,7 @@ def get_user_by_id(user_id: int, session: Session = Depends(get_session)):
         Mentors=mentee.Mentors or [],
         Images=mentee.Images or [],
         Role=mentee.Role,
+        TeamID=mentee.TeamID
     )
     return mentee_out
 
@@ -289,23 +293,15 @@ def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):
 
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
 
-
-
-
-
-
-
-
-
-
-
 @app.post("/photos/new")
 def create_photo(
+
     file: Annotated[UploadFile, Form(...)],
     caption: Annotated[str, Form(...)],
     challenge_id: Annotated[int, Form(...)],
     team_id: Annotated[int, Form(...)],
     session: SessionDep
+
 ):
     # Validate ChallengeID
     challenge = session.get(Challenge, challenge_id)
@@ -590,8 +586,6 @@ def update_week_status(week_id: int, published_status: AttendanceStatus, session
     session.refresh(week)
     return week
 
-
-
 security = HTTPBasic()
 
 @app.post("/users/authenticate")
@@ -614,8 +608,6 @@ def authenticate_user(credentials: HTTPBasicCredentials, session: Session = Depe
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-
-
     # Simple password check (no hashing for now)
     if user.Password != password:
         raise HTTPException(status_code=400, detail="Incorrect password")

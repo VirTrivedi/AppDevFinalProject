@@ -12,11 +12,8 @@ import Photos from './Photos';
 import MainPage from './MainPage';
 import Login from './Login';
 import SignUp from './SignUp';
-import { useAppContext } from './AppContext';
 
 const App: React.FC = () => {
-
-  const { isLoggedIn } = useAppContext();
   return (
     <Router>
       <Routes>

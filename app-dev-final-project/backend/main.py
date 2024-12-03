@@ -77,17 +77,7 @@ class Challenge(SQLModel, table=True):
     # Relationships
     Photos: List["Photo"] = Relationship(back_populates="Challenges")
 
-class ChallengeOut(BaseModel):
-    ID: int
-    Description: str
-    StartDate: datetime
-    EndDate: datetime
-    PointsValue: int
-    # Optional field to include associated photos
-    Photos: Optional[List[str]] = None
 
-    class Config:
-        orm_mode = True 
 
 # Photo Model
 class Photo(SQLModel, table=True):
@@ -104,6 +94,40 @@ class Photo(SQLModel, table=True):
     Challenges: Optional[Challenge] = Relationship(back_populates="Photos")
     Users: Optional[User] = Relationship(back_populates="Photos")
 
+class PhotoOut(BaseModel):
+    ID: int
+    Caption: str
+    FileData: Optional[str]  # Base64 encoded image data
+    Status: str
+    ChallengeID: int
+    TeamID: int
+
+    class Config:
+        orm_mode = True
+
+class ChallengeOut(BaseModel):
+    ID: int
+    Description: str
+    StartDate: datetime
+    EndDate: datetime
+    PointsValue: int
+    # Optional field to include associated photos
+    Photos: Optional[List[PhotoOut]] = []
+
+    class Config:
+        orm_mode = True 
+    
+    @staticmethod
+    def serialize_photo(photo):
+        return {
+            "ID": photo.ID,
+            "Caption": photo.Caption,
+            "FileData": base64.b64encode(photo.FileData).decode('utf-8'),
+            "Status": photo.Status,
+            "ChallengeID": photo.ChallengeID,
+            "TeamID": photo.TeamID,
+        }
+    
 # Week Model
 class Week(SQLModel, table=True):
     __tablename__ = 'week'
@@ -414,6 +438,27 @@ async def get_attendance_data(week: int):
 
 
 # Example route: Get all challenges
+# @app.get("/challenges", response_model=List[ChallengeOut])
+# def get_challenges(session: Session = Depends(get_session)):
+#     challenges = session.exec(select(Challenge)).scalars().all()
+
+#     if not challenges:
+#         raise HTTPException(status_code=404, detail="No challenges found")
+    
+#     challenges_out = [
+#         ChallengeOut(
+#             ID=challenge.ID,
+#             Description=challenge.Description,
+#             StartDate=challenge.StartDate,
+#             EndDate=challenge.EndDate,
+#             PointsValue=challenge.PointsValue,
+#             Photos=[photo.FileData for photo in challenge.Photos],
+#         )
+#         for challenge in challenges
+#     ]
+    
+#     return challenges_out
+
 @app.get("/challenges", response_model=List[ChallengeOut])
 def get_challenges(session: Session = Depends(get_session)):
     challenges = session.exec(select(Challenge)).scalars().all()
@@ -428,12 +473,13 @@ def get_challenges(session: Session = Depends(get_session)):
             StartDate=challenge.StartDate,
             EndDate=challenge.EndDate,
             PointsValue=challenge.PointsValue,
-            Photos=challenge.Photos,
+            Photos=[ChallengeOut.serialize_photo(photo) for photo in challenge.Photos] if challenge.Photos else [],
         )
         for challenge in challenges
     ]
     
     return challenges_out
+
 
 @app.get("/challenges/ordered")
 def get_challenges_ordered(session: SessionDep):
@@ -495,6 +541,26 @@ def get_photo(photo_id: int, session: SessionDep):
     }
 
 
+@app.put("/users/{user_id}/points", status_code=200) # points to add as query parameters
+def increase_user_points(user_id: int, points_to_add: int, session: Session = Depends(get_session)):
+
+    # Fetch the user by ID
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update the user's points
+    user.Points += points_to_add
+    session.add(user)
+
+    try:
+        session.commit()
+        session.refresh(user)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error updating points: {e}")
+
+    return {"message": "User points updated successfully", "user_id": user.ID, "new_points": user.Points}
 
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
 
@@ -651,27 +717,6 @@ def increase_team_points(team_id: int, points_to_add: int, session: SessionDep):
         "updated_users": [{"ID": user.ID, "Name": user.Name, "UpdatedPoints": user.P} for user in users]
     }
 
-
-@app.put("/users/{user_id}/points", status_code=200)
-def increase_user_points(user_id: int, points_to_add: int, session: Session = Depends(get_session)):
-
-    # Fetch the user by ID
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Update the user's points
-    user.Points += points_to_add
-    session.add(user)
-
-    try:
-        session.commit()
-        session.refresh(user)
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=400, detail=f"Error updating points: {e}")
-
-    return {"message": "User points updated successfully", "user_id": user.ID, "new_points": user.Points}
 
 
 

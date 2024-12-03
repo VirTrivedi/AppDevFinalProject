@@ -312,23 +312,94 @@ def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):
 
 @app.get("/weeks", response_model=List[WeekOut])
 def get_all_weeks(session: Session = Depends(get_session)):  # Adjust if needed for your dependency
-    weeks = session.exec(select(Week)).all()  # Correct for fetching all weeks
+    weeks = session.exec(select(Week)).scalars().all()  # Correct for fetching all weeks
 
     if not weeks:
         raise HTTPException(status_code=404, detail="No weeks found")
-    print(weeks)
+    for week in weeks:
+        print(week)
 
-    # Transform ORM objects into Pydantic models
     week_out = [
         WeekOut(
             ID=week.ID,
-            Published=week.Published,
+            Published=week.Published,  # Ensure this is an enum value
             DateActive=week.DateActive,
         )
         for week in weeks
     ]
+    
     return week_out
 
+
+@app.get("/weeks/{week_id}")
+def get_week_by_id(week_id: int, session: SessionDep):
+    week = session.get(Week, week_id)
+    if not week:
+        raise HTTPException(status_code=404, detail="Week not found")
+    week_out = [
+        WeekOut(
+            ID=week.ID,
+            Published=week.Published,  # Ensure this is an enum value
+            DateActive=week.DateActive,
+        )
+    ]
+    
+    return week_out
+
+
+@app.post("/weeks") # enter timestamp as query parameter!
+def create_week(date_active: datetime, session: SessionDep):
+    new_week = Week(DateActive=date_active, Published="unpublished")
+    session.add(new_week)
+    try:
+        session.commit()
+        session.refresh(new_week)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="Error creating week. Duplicate ID or invalid data.")
+    return new_week
+
+@app.put("/weeks/{week_id}/publish")
+def update_week_status(week_id: int, published_status: AttendanceStatus, session: Session = Depends(get_session)):
+    week = session.get(Week, week_id)
+    if not week:
+        raise HTTPException(status_code=404, detail="Week not found")
+    
+    week.Published = published_status
+    session.add(week)
+    session.commit()
+    session.refresh(week)
+    return week
+
+# below: google sheet stuff
+async def get_google_sheet_data(week_num: int):
+    if not SERVICE_ACCOUNT_FILE:
+        raise HTTPException(status_code=500, detail="GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
+    
+    spreadsheet_id = '1XMVHhCLZ0Ipx18_ZnRXDB05DdRUr2KPMXwo6nJXxXY4'  
+    start_column = chr(ord('A') + week_num)  # column letter
+    end_column = start_column
+    start_row = 2  # Starting from row 2 
+    end_row = 10  # number of users
+    
+    range_name =  f'Sheet1!{start_column}{start_row}:{end_column}{end_row}'
+   
+    credentials = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    
+    service = build('sheets', 'v4', credentials=credentials)
+    sheet = service.spreadsheets()
+    
+    result = sheet.values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+    values = result.get('values', [])
+    return values
+
+@app.get("/api/attendance/{week}")
+async def get_attendance_data(week: int):
+    data = await get_google_sheet_data(week)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"No attendance data found for week {week}.")
+    return {"week": week, "attendance_data": data}
 
 
 
@@ -564,69 +635,13 @@ def increase_team_points(team_id: int, points_to_add: int, session: SessionDep):
         "updated_users": [{"ID": user.ID, "Name": user.Name, "UpdatedPoints": user.P} for user in users]
     }
 
-# below: google sheet stuff
-async def get_google_sheet_data(week_num: int):
-    if not SERVICE_ACCOUNT_FILE:
-        raise HTTPException(status_code=500, detail="GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
-    
-    spreadsheet_id = '1XMVHhCLZ0Ipx18_ZnRXDB05DdRUr2KPMXwo6nJXxXY4'  
-    start_column = chr(ord('A') + week_num)  # column letter
-    end_column = start_column
-    start_row = 2  # Starting from row 2 
-    end_row = 10  # number of users
-    
-    range_name =  f'Sheet1!{start_column}{start_row}:{end_column}{end_row}'
-   
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    
-    service = build('sheets', 'v4', credentials=credentials)
-    sheet = service.spreadsheets()
-    
-    result = sheet.values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
-    values = result.get('values', [])
-    return values
-
-@app.get("/api/attendance/{week}")
-async def get_attendance_data(week: int):
-    data = await get_google_sheet_data(week)
-    if not data:
-        raise HTTPException(status_code=404, detail=f"No attendance data found for week {week}.")
-    return {"week": week, "attendance_data": data}
 
 
 
 
-@app.get("/weeks/{week_id}")
-def get_week_by_id(week_id: int, session: SessionDep):
-    week = session.get(Week, week_id)
-    if not week:
-        raise HTTPException(status_code=404, detail="Week not found")
-    return week
 
-@app.post("/weeks")
-def create_week(date_active: datetime, session: SessionDep):
-    new_week = Week(DateActive=date_active, Published="unpublished")
-    session.add(new_week)
-    try:
-        session.commit()
-        session.refresh(new_week)
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=400, detail="Error creating week. Duplicate ID or invalid data.")
-    return new_week
 
-@app.put("/weeks/{week_id}/publish")
-def update_week_status(week_id: int, published_status: AttendanceStatus, session: SessionDep):
-    week = session.get(Week, week_id)
-    if not week:
-        raise HTTPException(status_code=404, detail="Week not found")
-    
-    week.Published = published_status
-    session.add(week)
-    session.commit()
-    session.refresh(week)
-    return week
+
 
 
 

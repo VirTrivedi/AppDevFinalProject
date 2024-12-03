@@ -91,25 +91,18 @@ const Login: React.FC = () => {
 export default Login;
 
 const styles: {
-  page: React.CSSProperties;
-  container: React.CSSProperties;
-  title: React.CSSProperties;
-  formGroup: React.CSSProperties;
-  label: React.CSSProperties;
-  input: React.CSSProperties;
-  button: React.CSSProperties;
-  linkText: React.CSSProperties;
-  link: React.CSSProperties;
-} = {
+  [key: string]: React.CSSProperties; 
+ } = {
   page: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',
     margin: '0',
-    fontFamily: "'Arial', sans-serif",
+    fontFamily: "'Gill Sans', sans-serif",
     width: '100vw',
-  },
+    background: 'radial-gradient( #002066, #3A1258)',
+    },
   container: {
     display: 'flex',
     flexDirection: 'column',
@@ -121,7 +114,7 @@ const styles: {
     maxWidth: '800px',
     padding: '40px',
     borderRadius: '20px',
-    background: 'linear-gradient(to bottom, #FFFBCC, #FFF3A0)',
+    background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',
     boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
   },
   title: {

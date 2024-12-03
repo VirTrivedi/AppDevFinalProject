@@ -12,7 +12,7 @@ photosData = [
     ("sample_image_2.jpg", "Team meeting at dorm", 2),
     ("sample_image_3.jpg", "Team in front of the local landmark", 1),
     ("sample_image_4.jpg", "Team mimicking an animal", 2),
-    ("sample_image_5.jpg", "Team jump shot at outdoor park", 3),
+    ("sample_image_5.jpg", "Team jump shot at outdoor park", 3)
 
 ]
 

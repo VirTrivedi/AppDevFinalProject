@@ -76,6 +76,18 @@ class Challenge(SQLModel, table=True):
     # Relationships
     Photos: List["Photo"] = Relationship(back_populates="Challenges")
 
+class ChallengeOut(BaseModel):
+    ID: int
+    Description: str
+    StartDate: datetime
+    EndDate: datetime
+    PointsValue: int
+    # Optional field to include associated photos
+    Photos: Optional[List[str]] = None
+
+    class Config:
+        orm_mode = True 
+
 # Photo Model
 class Photo(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True)
@@ -128,7 +140,6 @@ def get_session():
 
 
 SessionDep = Annotated[Session, Depends(get_session)]
-
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -268,24 +279,23 @@ def get_user_by_id(user_id: int, session: Session = Depends(get_session)):
 
 @app.get("/users/team/{team_id}", response_model=List[UserOut])
 def get_users_by_team(team_id: int, session: Session = Depends(get_session)):
-    # Query the database for all users with the given TeamID
-    users = session.exec(select(User).where(User.TeamID == team_id)).all()
+    mentees_query = select(User).where(User.Role == RoleEnum.mentee, User.TeamID == team_id)
+    mentees = session.exec(mentees_query).scalars().all()  # Use scalars() to retrieve ORM objects
 
-    if not users:
-        raise HTTPException(status_code=404, detail="No users found for this team")
+    if not mentees:
+        raise HTTPException(status_code=404, detail=f"No mentees found for team {team_id}")
 
-    # Return the users as a list of UserOut
     return [
         UserOut(
-            ID=user.ID,
-            Name=user.Name,
-            Email=user.Email,
-            Points=user.Points,
-            Mentors=user.Mentors or [],
-            Images=user.Images or [],
-            Role=user.Role,
+            ID=mentee.ID,
+            Name=mentee.Name,
+            Email=mentee.Email,
+            Points=mentee.Points,
+            Mentors=mentee.Mentors or [],
+            Images=mentee.Images or [],
+            Role=mentee.Role,
         )
-        for user in users
+        for mentee in mentees
     ]
 
 @app.delete("/mentees/{mentee_id}", response_model=dict)
@@ -402,10 +412,66 @@ async def get_attendance_data(week: int):
     return {"week": week, "attendance_data": data}
 
 
+# Example route: Get all challenges
+@app.get("/challenges", response_model=List[ChallengeOut])
+def get_challenges(session: Session = Depends(get_session)):
+    challenges = session.exec(select(Challenge)).scalars().all()
 
+    if not challenges:
+        raise HTTPException(status_code=404, detail="No challenges found")
+    
+    challenges_out = [
+        ChallengeOut(
+            ID=challenge.ID,
+            Description=challenge.Description,
+            StartDate=challenge.StartDate,
+            EndDate=challenge.EndDate,
+            PointsValue=challenge.PointsValue,
+            Photos=challenge.Photos,
+        )
+        for challenge in challenges
+    ]
+    
+    return challenges_out
 
+@app.get("/challenges/ordered")
+def get_challenges_ordered(session: SessionDep):
+    challenges = session.exec(select(Challenge).order_by(Challenge.ID)).scalars().all()
 
-
+    if not challenges:
+        raise HTTPException(status_code=404, detail="No challenges found")
+    
+    challenges_out = [
+        ChallengeOut(
+            ID=challenge.ID,
+            Description=challenge.Description,
+            StartDate=challenge.StartDate,
+            EndDate=challenge.EndDate,
+            PointsValue=challenge.PointsValue,
+            Photos=challenge.Photos,
+        )
+        for challenge in challenges
+    ]
+    
+    return challenges_out
+ 
+# Example route: Create a new challenge
+@app.post("/challenges/new") # enter info as query parameters
+def create_challenge(description: str, start_date: datetime, end_date: datetime, points_value: int, session: SessionDep):
+    new_challenge = Challenge(
+        Description=description,
+        StartDate=start_date,
+        EndDate=end_date,
+        PointsValue=points_value
+    )
+    session.add(new_challenge)
+    try:
+        session.commit()
+        session.refresh(new_challenge)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="Error creating challenge. Duplicate data or invalid inputs.")
+    return new_challenge
 
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
 
@@ -551,51 +617,32 @@ def deny_photo(photo_id: int, session: SessionDep):
 
 
 
-# Example route: Get all challenges
-@app.get("/challenges")
-def get_challenges(session: SessionDep):
-    return session.exec(select(Challenge)).all()
+@app.put("/users/team/{team_id}/increase_points")
+def increase_team_points(team_id: int, points_to_add: int, session: SessionDep):
+    # Fetch all users with the specified TeamID
+    users = session.exec(select(User).where(User.TeamID == team_id)).all()
+    if not users:
+        raise HTTPException(status_code=404, detail="No users found with the specified TeamID")
+    print(users)
 
-@app.get("/challenges/ordered")
-def get_challenges_ordered(session: SessionDep):
-    challenges = session.exec(select(Challenge).order_by(Challenge.ID)).all()
-    return challenges
+    # Update points for each user
+    for user in users:
+        if user.Points is None:
+            user.Points = 0
+        user.Points += points_to_add
+        session.add(user)
 
-# Example route: Create a new challenge
-@app.post("/challenges/new")
-def create_challenge(description: str, start_date: datetime, end_date: datetime, points_value: int, session: SessionDep):
-    new_challenge = Challenge(
-        Description=description,
-        StartDate=start_date,
-        EndDate=end_date,
-        PointsValue=points_value
-    )
-    session.add(new_challenge)
-    try:
-        session.commit()
-        session.refresh(new_challenge)
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=400, detail="Error creating challenge. Duplicate data or invalid inputs.")
-    return new_challenge
+    session.commit()
 
-
-
-    
+    return {
+        "message": f"Points updated successfully for {len(users)} users in team {team_id}.",
+        "updated_users": [{"ID": user.ID, "Name": user.Name, "UpdatedPoints": user.P} for user in users]
+    }
 
 
 @app.put("/users/{user_id}/points", status_code=200)
 def increase_user_points(user_id: int, points_to_add: int, session: Session = Depends(get_session)):
-    """
-    Increase a user's points by a specified amount based on their user ID.
-    
-    Args:
-        user_id: ID of the user to update.
-        points_to_add: Number of points to add.
-        session: Database session dependency.
-    Returns:
-        JSON response with the updated user's ID and new points total.
-    """
+
     # Fetch the user by ID
     user = session.get(User, user_id)
     if not user:
@@ -614,26 +661,11 @@ def increase_user_points(user_id: int, points_to_add: int, session: Session = De
 
     return {"message": "User points updated successfully", "user_id": user.ID, "new_points": user.Points}
 
-@app.put("/users/team/{team_id}/increase_points")
-def increase_team_points(team_id: int, points_to_add: int, session: SessionDep):
-    # Fetch all users with the specified TeamID
-    users = session.exec(select(User).where(User.TeamID == team_id)).all()
-    if not users:
-        raise HTTPException(status_code=404, detail="No users found with the specified TeamID")
 
-    # Update points for each user
-    for user in users:
-        if user.Points is None:
-            user.Points = 0
-        user.Points += points_to_add
-        session.add(user)
 
-    session.commit()
 
-    return {
-        "message": f"Points updated successfully for {len(users)} users in team {team_id}.",
-        "updated_users": [{"ID": user.ID, "Name": user.Name, "UpdatedPoints": user.P} for user in users]
-    }
+
+
 
 
 
@@ -701,7 +733,7 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
             Points=mentee.Points,
             Mentors=mentee.Mentors or [],
             Images=mentee.Images or [],
-            Role=mentee.Role,
+            Role=mentee.Role
         )
         for mentee in mentees
     ]

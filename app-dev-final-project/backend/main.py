@@ -142,6 +142,7 @@ class Week(SQLModel, table=True):
     __tablename__ = 'week'
     ID: Optional[int] = Field(default=None, primary_key=True)
     Published: AttendanceStatus = Field(nullable=False)  # Stored as strings in SQLite
+    
     DateActive: datetime = Field(nullable=False)
 
 class WeekOut(BaseModel):
@@ -483,7 +484,6 @@ def update_week_status(week_id: int, published_status: AttendanceStatus, session
     session.add(week)
     session.commit()
     session.refresh(week)
-
     return week
 
 # below: google sheet stuff
@@ -509,11 +509,15 @@ async def get_google_sheet_data(week_num: int):
     values = result.get('values', [])
     return values
 
+from fastapi import HTTPException, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy.future import select
+import asyncio
 
-@app.post("/attendance")
-def update_attendance_points_for_week(week_num: int, session: Session = Depends(get_session)):
+@app.post("/api/attendance/update")
+async def update_attendance_points_for_week(week_num: int, session: Session = Depends(get_session)):
     # Fetch the attendance data for the given week number (e.g., week 1, 2, etc.)
-    attendance_data = asyncio.run(get_google_sheet_data(week_num=week_num))  # Fetch specific week data
+    attendance_data = await get_google_sheet_data(week_num=week_num)  # Use await instead of asyncio.run
     
     if not attendance_data:
         raise HTTPException(status_code=404, detail="No attendance data found.")
@@ -523,7 +527,7 @@ def update_attendance_points_for_week(week_num: int, session: Session = Depends(
         user_name = row[0].strip()  # Assume column A (index 0) contains the names
         
         # Fetch user by name from the database
-        user = session.exec(select(User).where(User.Name == user_name)).first()
+        user = session.execute(select(User).where(User.Name == user_name)).scalars().first()
         if not user:
             print(f"User with name '{user_name}' not found in the database. Skipping.")
             continue

@@ -1,9 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Photos: React.FC = () => {
+  const [photos, setPhotos] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Fetch approved photos when the component mounts
+  useEffect(() => {
+    const fetchApprovedPhotos = async () => {
+      try {
+        const response = await fetch('/photos/approved');
+        if (!response.ok) {
+          throw new Error('Failed to fetch approved photos');
+        }
+        const data = await response.json();
+        setPhotos(data); // Assuming the response is an array of photos
+      } catch (error) {
+        console.error('Error fetching approved photos:', error);
+      }
+    };
+
+    fetchApprovedPhotos();
+  }, []);
 
   const handleNext = () => {
     setIsAnimating(true);
@@ -32,25 +51,25 @@ const Photos: React.FC = () => {
       <div style={styles.container}>
         <h1>Uploaded Photos</h1>
         <p>No photos uploaded yet.</p>
-        <Link to="/" style={styles.link}>
+        <Link to="/dashboard" style={styles.link}>
           Back to Dashboard
         </Link>
       </div>
     );
   }
 
-  const { photo, caption } = photos[currentIndex];
+  const { FileData, Caption } = photos[currentIndex];
 
   return (
     <div style={styles.container}>
-      <h1>Uploaded Photos</h1>
+      <h1>Approved Photos</h1>
       <div style={styles.carousel}>
         <button onClick={handlePrevious} style={styles.navButton}>
           &lt; Prev
         </button>
         <div style={styles.photoContainer}>
           <img
-            src={URL.createObjectURL(photo)}
+            src={`data:image/jpeg;base64,${btoa(String.fromCharCode(...new Uint8Array(FileData)))}`}
             alt="Uploaded"
             style={{
               ...styles.photo,
@@ -58,7 +77,7 @@ const Photos: React.FC = () => {
               transition: 'transform 0.3s ease',
             }}
           />
-          <p style={styles.caption}>{caption}</p>
+          <p style={styles.caption}>{Caption}</p>
         </div>
         <button onClick={handleNext} style={styles.navButton}>
           Next &gt;

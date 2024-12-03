@@ -436,9 +436,42 @@ def get_challenges(session: Session = Depends(get_session)):
 
 @app.get("/challenges/ordered")
 def get_challenges_ordered(session: SessionDep):
-    challenges = session.exec(select(Challenge).order_by(Challenge.ID)).all()
-    return challenges
+    challenges = session.exec(select(Challenge).order_by(Challenge.ID)).scalars().all()
 
+    if not challenges:
+        raise HTTPException(status_code=404, detail="No challenges found")
+    
+    challenges_out = [
+        ChallengeOut(
+            ID=challenge.ID,
+            Description=challenge.Description,
+            StartDate=challenge.StartDate,
+            EndDate=challenge.EndDate,
+            PointsValue=challenge.PointsValue,
+            Photos=challenge.Photos,
+        )
+        for challenge in challenges
+    ]
+    
+    return challenges_out
+ 
+# Example route: Create a new challenge
+@app.post("/challenges/new") # enter info as query parameters
+def create_challenge(description: str, start_date: datetime, end_date: datetime, points_value: int, session: SessionDep):
+    new_challenge = Challenge(
+        Description=description,
+        StartDate=start_date,
+        EndDate=end_date,
+        PointsValue=points_value
+    )
+    session.add(new_challenge)
+    try:
+        session.commit()
+        session.refresh(new_challenge)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="Error creating challenge. Duplicate data or invalid inputs.")
+    return new_challenge
 
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
 
@@ -581,30 +614,6 @@ def deny_photo(photo_id: int, session: SessionDep):
     return {"message": f"Photo ID {photo_id} has been denied", "photo": photo}
 
 
-
-
-
-
-
-
-
-# Example route: Create a new challenge
-@app.post("/challenges/new")
-def create_challenge(description: str, start_date: datetime, end_date: datetime, points_value: int, session: SessionDep):
-    new_challenge = Challenge(
-        Description=description,
-        StartDate=start_date,
-        EndDate=end_date,
-        PointsValue=points_value
-    )
-    session.add(new_challenge)
-    try:
-        session.commit()
-        session.refresh(new_challenge)
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=400, detail="Error creating challenge. Duplicate data or invalid inputs.")
-    return new_challenge
 
 
 

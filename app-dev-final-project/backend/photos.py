@@ -7,16 +7,11 @@ cur = con.cursor()
 
 # Sample photo data
 photosData = [
-    ("sample_image_1.jpg", "A fun team photo with boba", 1, 1),
-    ("sample_image_2.jpg", "Team meeting at dorm", 2, 2),
-    ("sample_image_3.jpg", "Team in front of the local landmark", 3, 1),
-    ("sample_image_4.jpg", "Team mimicking an animal", 4, 2),
-    ("sample_image_5.jpg", "Team jump shot at outdoor park", 5, 3),
-    ("sample_image_6.jpg", "Team in Halloween costumes", 6, 1),
-    ("sample_image_7.jpg", "Team lying in a fun shape", 7, 2),
-    ("sample_image_8.jpg", "Team show and tell", 8, 3),
-    ("sample_image_9.jpg", "Team human chain with hands held", 9, 1),
-    ("sample_image_10.jpg", "Team wearing the same color", 10, 2),
+    ("sample_image_1.jpg", "A fun team photo with boba", 1),
+    ("sample_image_2.jpg", "Team meeting at dorm", 2),
+    ("sample_image_3.jpg", "Team in front of the local landmark", 1),
+    ("sample_image_4.jpg", "Team mimicking an animal", 2),
+    ("sample_image_5.jpg", "Team jump shot at outdoor park", 3),
 ]
 
 # Optional: Clear existing photos for a clean insert

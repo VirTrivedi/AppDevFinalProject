@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import "./Leaderboard.css";
 
 interface Participant {
     ID: number;
@@ -13,6 +12,7 @@ const Leaderboard: React.FC = () => {
     const [mentees, setMentees] = useState<Participant[]>([]);
     const [person, setPerson] = useState<Participant | null>(null); // Replace with actual logged-in user data
     const API_BASE_URL = 'http://127.0.0.1:8000';
+
 
 
     // Fetch mentees from the backend

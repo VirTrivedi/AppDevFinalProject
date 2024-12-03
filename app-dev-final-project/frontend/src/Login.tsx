@@ -12,7 +12,7 @@ const Login: React.FC = () => {
   const authenticateUser = async (email: string, password: string) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/users/authenticate`, {
-        username: email,
+        email: email,
         password: password,
       });
       return response.data; // Assuming the backend returns the user object on success
@@ -34,7 +34,7 @@ const Login: React.FC = () => {
           if (user.Role === 'admin') {
             navigate('/admin'); // Redirect to admin dashboard
           } else if (user.Role === 'mentee') {
-            navigate('/dashboard'); // Redirect to mentee dashboard
+            navigate('/dashboard', { state: { teamID: user.TeamID } }); // Redirect to mentee dashboard
           } else {
             alert('Unknown user role. Please contact support.');
           }
@@ -58,7 +58,7 @@ const Login: React.FC = () => {
         <div style={styles.formGroup}>
           <label style={styles.label}>Email:</label>
           <input
-            type="email"
+            type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={styles.input}
@@ -68,7 +68,7 @@ const Login: React.FC = () => {
         <div style={styles.formGroup}>
           <label style={styles.label}>Password:</label>
           <input
-            type="password"
+            type="text"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={styles.input}

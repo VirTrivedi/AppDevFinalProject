@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 // Interface for User
@@ -25,6 +25,10 @@ interface Challenge {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation()
+
+  // Extract TeamID from navigate state
+  const { teamID } = location.state || {};
 
   const [teammates, setTeammates] = useState<User[]>([]);
   const [mentors, setMentors] = useState<string[]>([]);
@@ -36,7 +40,7 @@ const Dashboard: React.FC = () => {
   const fetchTeammates = async () => {
     if (!person?.TeamID) return;
     try {
-      const response = await axios.get<User[]>(`${API_BASE_URL}/users/team/${person.TeamID}`);
+      const response = await axios.get<User[]>(`${API_BASE_URL}/users/team/${teamID}`);
       setTeammates(response.data);
     } catch (error) {
       console.error('Error fetching teammates:', error);
@@ -69,19 +73,28 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Fetch user details from localStorage
+  const loadUserFromLocalStorage = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setPerson(JSON.parse(userData));
+    }
+  };
+
   // On component mount, fetch data
   useEffect(() => {
+    loadUserFromLocalStorage();
     fetchChallenges();
   }, []);
 
   useEffect(() => {
-    if (person?.TeamID) {
+    if (teamID) {
       fetchTeammates();
     }
     if (person?.ID) {
       fetchMentorsForMentee();
     }
-  }, [person]);
+  }, [teamID, person]);
 
   // Sort teammates
   const sortedTeammates = [...teammates].sort((a, b) => a.Name.localeCompare(b.Name));
@@ -90,6 +103,7 @@ const Dashboard: React.FC = () => {
   const handleLogout = () => {
     const confirmLogout = window.confirm('Are you sure you want to log out?');
     if (confirmLogout) {
+      localStorage.removeItem('user');
       navigate('/login'); // Redirect to login page
     }
   };

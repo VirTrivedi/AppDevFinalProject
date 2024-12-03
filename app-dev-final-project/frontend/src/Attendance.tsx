@@ -1,25 +1,57 @@
 import React, { useState, useEffect } from "react";
+import axios from 'axios';
+
+// Define AttendanceStatus enum based on the backend model
+type AttendanceStatus = "pending" | "approved" | "denied";
+
+// Define the WeekOut model
+interface WeekOut {
+  ID: number;
+  Published: AttendanceStatus;
+  DateActive: string; // ISO date string
+}
 
 const Attendance = () => {
-  const { fetchAttendanceData, weeks, publishWeek, fetchWeeks } = useAppContext();
-  const [attendanceData, setAttendanceData] = useState<boolean[]>([]);
-  const currentTime = Math.floor(Date.now() / 1000);
+  const [weeks, setWeeks] = useState<WeekOut[]>([]); // Holds weeks data
+  const [attendanceData, setAttendanceData] = useState<boolean[]>([]); // Holds publication status
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+  const API_BASE_URL = 'http://127.0.0.1:8000';
 
-  useEffect(() => {
-    const loadAttendanceData = async () => {
-      if (weeks.length > 0) {
-        // Fetch attendance data for all weeks
-        const attendancePromises = weeks.map((week) =>
-          fetchAttendanceData(week.ID)
-        );
-        const results = await Promise.all(attendancePromises);
-        setAttendanceData(results.map((attendance) => attendance.includes(true)));
+  // Fetch all weeks from the backend
+  const fetchWeeks = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/weeks`);
+      setWeeks(response.data);
+    } catch (error) {
+      console.error("Error fetching weeks:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Publish a specific week
+  const publishWeek = async (weekId: number) => {
+    try {
+      const response = await fetch(`/weeks/${weekId}/publish`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ published_status: "approved" }), // Update status to "approved"
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to publish the week");
       }
-    };
+      const updatedWeek = await response.json();
+      console.log("Week published:", updatedWeek);
+    } catch (error) {
+      console.error("Error publishing week:", error);
+    }
+  };
 
-    loadAttendanceData();
-  }, [weeks, fetchAttendanceData]);
-
+  // Handle the click event to publish a week
   const handleClick = async (weekId: number, index: number) => {
     if (!attendanceData[index]) {
       try {
@@ -29,14 +61,19 @@ const Attendance = () => {
           newData[index] = true; // Mark as published
           return newData;
         });
-        await fetchWeeks(); // Refresh week data
+        await fetchWeeks(); // Refresh weeks data
       } catch (error) {
         console.error("Error publishing attendance:", error);
       }
     }
   };
 
-  const renderButton = (isPublished: boolean, week: { ID: number; DateActive: string }, index: number) => {
+  // Render the publish/attendance button
+  const renderButton = (
+    isPublished: boolean,
+    week: WeekOut,
+    index: number
+  ) => {
     const weekDate = new Date(week.DateActive).getTime() / 1000;
     const isUpcoming = currentTime < weekDate;
 
@@ -54,20 +91,37 @@ const Attendance = () => {
         onClick={() => handleClick(week.ID, index)}
         disabled={isPublished || isUpcoming}
       >
-        {isPublished ? "Published" : isUpcoming ? "Upcoming" : "Assign attendance points"}
+        {isPublished
+          ? "Published"
+          : isUpcoming
+          ? "Upcoming"
+          : "Assign attendance points"}
       </button>
     );
   };
 
+  // Fetch weeks data on component mount
+  useEffect(() => {
+    fetchWeeks();
+  }, []);
+
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <h2>Attendance Status</h2>
-      {weeks.map((week, index) => (
-        <div key={week.ID} style={{ margin: "10px" }}>
-          <span>Week {index + 1} ({week.DateActive})</span>
-          {renderButton(attendanceData[index], week, index)}
-        </div>
-      ))}
+      {isLoading ? (
+        <p>Loading attendance data...</p>
+      ) : weeks.length === 0 ? (
+        <p>No weeks available to display.</p>
+      ) : (
+        weeks.map((week, index) => (
+          <div key={week.ID} style={{ margin: "10px" }}>
+            <span>
+              Week {index + 1} ({new Date(week.DateActive).toLocaleDateString()})
+            </span>
+            {renderButton(attendanceData[index], week, index)}
+          </div>
+        ))
+      )}
     </div>
   );
 };

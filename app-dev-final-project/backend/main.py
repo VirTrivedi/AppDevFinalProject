@@ -3,6 +3,7 @@ from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, ForeignKey, Enum, Column
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
@@ -15,6 +16,9 @@ import io
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+import asyncio 
+
+
 
 load_dotenv()
 
@@ -34,7 +38,7 @@ class AttendanceStatus(PyEnum):
 
 class RoleEnum(PyEnum):
     mentee = "mentee"
-    mentor = "mentor"
+    admin = "admin"
 
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
@@ -77,17 +81,7 @@ class Challenge(SQLModel, table=True):
     # Relationships
     Photos: List["Photo"] = Relationship(back_populates="Challenges")
 
-class ChallengeOut(BaseModel):
-    ID: int
-    Description: str
-    StartDate: datetime
-    EndDate: datetime
-    PointsValue: int
-    # Optional field to include associated photos
-    Photos: Optional[List[str]] = None
 
-    class Config:
-        orm_mode = True 
 
 # Photo Model
 class Photo(SQLModel, table=True):
@@ -104,6 +98,40 @@ class Photo(SQLModel, table=True):
     Challenges: Optional[Challenge] = Relationship(back_populates="Photos")
     Users: Optional[User] = Relationship(back_populates="Photos")
 
+class PhotoOut(BaseModel):
+    ID: int
+    Caption: str
+    FileData: Optional[str]  # Base64 encoded image data
+    Status: str
+    ChallengeID: int
+    TeamID: int
+
+    class Config:
+        orm_mode = True
+
+class ChallengeOut(BaseModel):
+    ID: int
+    Description: str
+    StartDate: datetime
+    EndDate: datetime
+    PointsValue: int
+    # Optional field to include associated photos
+    Photos: Optional[List[PhotoOut]] = []
+
+    class Config:
+        orm_mode = True 
+    
+    @staticmethod
+    def serialize_photo(photo):
+        return {
+            "ID": photo.ID,
+            "Caption": photo.Caption,
+            "FileData": base64.b64encode(photo.FileData).decode('utf-8'),
+            "Status": photo.Status,
+            "ChallengeID": photo.ChallengeID,
+            "TeamID": photo.TeamID,
+        }
+    
 # Week Model
 class Week(SQLModel, table=True):
     __tablename__ = 'week'
@@ -405,15 +433,48 @@ async def get_google_sheet_data(week_num: int):
     values = result.get('values', [])
     return values
 
-@app.get("/api/attendance/{week}")
-async def get_attendance_data(week: int):
-    data = await get_google_sheet_data(week)
-    if not data:
-        raise HTTPException(status_code=404, detail=f"No attendance data found for week {week}.")
-    return {"week": week, "attendance_data": data}
+
+@app.post("/api/attendance/update")
+def update_attendance_points_for_week(week_num: int, session: Session = Depends(get_session)):
+    # Fetch the attendance data for the given week number (e.g., week 1, 2, etc.)
+    attendance_data = asyncio.run(get_google_sheet_data(week_num=week_num))  # Fetch specific week data
+    
+    if not attendance_data:
+        raise HTTPException(status_code=404, detail="No attendance data found.")
+    
+    # Iterate over each row (person)
+    for row in attendance_data:
+        user_name = row[0].strip()  # Assume column A (index 0) contains the names
+        
+        # Fetch user by name from the database
+        user = session.exec(select(User).where(User.Name == user_name)).first()
+        if not user:
+            print(f"User with name '{user_name}' not found in the database. Skipping.")
+            continue
+        
+        # Access the specific week column (user input)
+        if week_num < len(row):
+            attendance_status = row[week_num].strip().lower()
+            
+            if attendance_status == "true":
+                # Increment points for the given week if the attendance is true
+                user.Points += 20
+        
+        # Add updated user to the session
+        session.add(user)
+    
+    # Commit the changes to the database
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating attendance points: {e}")
+
+    return {"message": f"Attendance points updated for all users for week {week_num}"}
 
 
-# Example route: Get all challenges
+
+
 @app.get("/challenges", response_model=List[ChallengeOut])
 def get_challenges(session: Session = Depends(get_session)):
     challenges = session.exec(select(Challenge)).scalars().all()
@@ -428,12 +489,13 @@ def get_challenges(session: Session = Depends(get_session)):
             StartDate=challenge.StartDate,
             EndDate=challenge.EndDate,
             PointsValue=challenge.PointsValue,
-            Photos=challenge.Photos,
+            Photos=[ChallengeOut.serialize_photo(photo) for photo in challenge.Photos] if challenge.Photos else [],
         )
         for challenge in challenges
     ]
     
     return challenges_out
+
 
 @app.get("/challenges/ordered")
 def get_challenges_ordered(session: SessionDep):
@@ -495,6 +557,26 @@ def get_photo(photo_id: int, session: SessionDep):
     }
 
 
+@app.put("/users/{user_id}/points", status_code=200) # points to add as query parameters
+def increase_user_points(user_id: int, points_to_add: int, session: Session = Depends(get_session)):
+
+    # Fetch the user by ID
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update the user's points
+    user.Points += points_to_add
+    session.add(user)
+
+    try:
+        session.commit()
+        session.refresh(user)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error updating points: {e}")
+
+    return {"message": "User points updated successfully", "user_id": user.ID, "new_points": user.Points}
 
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
 
@@ -626,7 +708,24 @@ def deny_photo(photo_id: int, session: SessionDep):
     return {"message": f"Photo ID {photo_id} has been denied", "photo": photo}
 
 
+@app.put("/photos/{photo_id}/pending")
+def deny_photo(photo_id: int, session: SessionDep):
+    # Retrieve the photo by ID
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Check if the photo status is 'pending'
+    if photo.Status == PhotoStatus.pending:
+        raise HTTPException(status_code=400, detail="Only dnied/apprvoved photos can be pended")
+    
+    # Update the status to 'denied'
+    photo.Status = PhotoStatus.pending
+    session.add(photo)
+    session.commit()
+    session.refresh(photo)
 
+    return {"message": f"Photo ID {photo_id} has been rest to pending", "photo": photo}
 
 
 @app.put("/users/team/{team_id}/increase_points")
@@ -651,27 +750,6 @@ def increase_team_points(team_id: int, points_to_add: int, session: SessionDep):
         "updated_users": [{"ID": user.ID, "Name": user.Name, "UpdatedPoints": user.P} for user in users]
     }
 
-
-@app.put("/users/{user_id}/points", status_code=200)
-def increase_user_points(user_id: int, points_to_add: int, session: Session = Depends(get_session)):
-
-    # Fetch the user by ID
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Update the user's points
-    user.Points += points_to_add
-    session.add(user)
-
-    try:
-        session.commit()
-        session.refresh(user)
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=400, detail=f"Error updating points: {e}")
-
-    return {"message": "User points updated successfully", "user_id": user.ID, "new_points": user.Points}
 
 
 
@@ -704,12 +782,11 @@ def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_
         raise HTTPException(status_code=400, detail="Missing required fields")
 
     # Query the database for a user with the given email
-    user = session.exec(select(User).where(User.Email == email)).first()
+    user = session.exec(select(User).where(User.Email == email)).scalars().first()
+    print(user)
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-
 
     # Simple password check (no hashing for now)
     if user.Password != password:
@@ -750,3 +827,26 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
         for mentee in mentees
     ]
     return mentees_out
+
+
+@app.delete("/mentees/delete/all", response_model=dict)
+def delete_all_mentees(session: Session = Depends(get_session)):
+   try:
+        # Query all users with the role of 'mentee'
+        mentees = session.query(User).filter(User.Role == RoleEnum.mentee).all()
+
+        # If no mentees are found, raise an exception
+        if not mentees:
+            raise HTTPException(status_code=404, detail="No mentees found")
+
+        # Delete all mentees
+        for mentee in mentees:
+            session.delete(mentee)
+
+        session.commit()
+        return {"message": f"All mentees deleted successfully."}
+   
+   except SQLAlchemyError as e:
+        # Rollback in case of any error
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error deleting mentees: {str(e)}")

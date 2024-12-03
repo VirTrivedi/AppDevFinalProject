@@ -15,6 +15,7 @@ import io
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+import asyncio 
 
 load_dotenv()
 
@@ -429,12 +430,47 @@ async def get_google_sheet_data(week_num: int):
     values = result.get('values', [])
     return values
 
-@app.get("/api/attendance/{week}")
-async def get_attendance_data(week: int):
-    data = await get_google_sheet_data(week)
-    if not data:
-        raise HTTPException(status_code=404, detail=f"No attendance data found for week {week}.")
-    return {"week": week, "attendance_data": data}
+
+@app.post("/api/attendance/update")
+def update_all_attendance_points(session: Session = Depends(get_session)):
+    # Retrieve attendance data for all weeks
+    attendance_data = asyncio.run(get_google_sheet_data(week_num=0))  # Fetch entire attendance range
+    
+    if not attendance_data:
+        raise HTTPException(status_code=404, detail="No attendance data found.")
+    
+    # Define starting week column index based on sheet structure (e.g., column B = index 1)
+    start_col_index = 1  # Adjust based on your sheet if week data starts from column 2
+    
+    # Iterate over each row (person)
+    for row in attendance_data:
+        user_name = row[0].strip()  # Assume column A contains the names
+        
+        # Fetch user by name from the database
+        user = session.exec(select(User).where(User.Name == user_name)).first()
+        if not user:
+            print(f"User with name '{user_name}' not found in the database. Skipping.")
+            continue
+        
+        # Iterate over each week (column) starting from the second column
+        for week_index in range(start_col_index, len(row)):
+            attendance_status = row[week_index].strip().lower()
+            
+            if attendance_status == "true":
+                # Increment points for each attended week
+                user.Points += 20
+        
+        # Add updated user to the session
+        session.add(user)
+    
+    # Commit the changes to the database
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating attendance points: {e}")
+
+    return {"message": "Attendance points updated for all users across all weeks"}
 
 
 # Example route: Get all challenges

@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 type Photo = {
   id: number;
@@ -17,19 +20,42 @@ interface Challenge {
   StartDate: string;
   EndDate: string;
   PointsValue: number;
-  photos: Photo[]; // Added photos array to match your data
+  photos: Photo[];
 }
 
 const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
   const [status, setStatus] = useState(photo.status);
 
-  const handleApprove = () => setStatus("approved");
-  const handleReject = () => setStatus("rejected");
-  const handleReset = () => setStatus("pending");
+  const handleApprove = async () => {
+    setStatus("approved");
+    try {
+      await axios.patch(`${API_BASE_URL}/photos/${photo.id}/approve`, { status: "approved" });
+    } catch (error) {
+      console.error("Error updating photo status:", error);
+    }
+  };
+
+  const handleReject = async () => {
+    setStatus("rejected");
+    try {
+      await axios.patch(`${API_BASE_URL}/photos/${photo.id}/deny`, { status: "rejected" });
+    } catch (error) {
+      console.error("Error updating photo status:", error);
+    }
+  };
+
+  const handleReset = async () => {
+    setStatus("pending");
+    try {
+      await axios.patch(`${API_BASE_URL}/photos/${photo.id}/pending`, { status: "pending" });
+    } catch (error) {
+      console.error("Error resetting photo status:", error);
+    }
+  };
 
   return (
     <div className="photo-item">
-      <img src={`/images/${photo.url}`} alt={photo.caption} className="photo" />
+      <img src={`${API_BASE_URL}/images/${photo.url}`} alt={photo.caption} className="photo" />
       <div className="caption">{photo.caption}</div>
       <div className="controls">
         {status === "pending" && (
@@ -48,21 +74,34 @@ const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
 };
 
 const MediaReviewPage: React.FC = () => {
-  const { fetchChallenges } = useAppContext();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [openChallenge, setOpenChallenge] = useState<number | null>(null); // Changed to number for ID comparison
+  const [openChallenge, setOpenChallenge] = useState<number | null>(null);
 
   useEffect(() => {
     const loadChallenges = async () => {
-      const fetchedChallenges = await fetchChallenges();
-      if (Array.isArray(fetchedChallenges)) {
-        setChallenges(fetchedChallenges);
-      } else {
-        console.error("Fetched data is not an array", fetchedChallenges);
+      try {
+        const response = await axios.get(`${API_BASE_URL}/challenges`);
+        const fetchedChallenges = response.data;
+
+        if (Array.isArray(fetchedChallenges)) {
+          setChallenges(fetchedChallenges);
+        } else {
+          console.error("Fetched data is not an array", fetchedChallenges);
+        }
+
+        const challengesWithPhotos = fetchedChallenges.map((challenge: Challenge) => ({
+          ...challenge,
+          photos: challenge.photos || [], // Fallback to empty array if photos is undefined or null
+        }));
+
+        setChallenges(challengesWithPhotos);
+
+      } catch (error) {
+        console.error("Error fetching challenges:", error);
       }
     };
     loadChallenges();
-  }, [fetchChallenges]);
+  }, []);
 
   const toggleDropdown = (challengeID: number) => {
     setOpenChallenge(openChallenge === challengeID ? null : challengeID);
@@ -70,27 +109,30 @@ const MediaReviewPage: React.FC = () => {
 
   return (
     <div className="media-review-page">
-      <h1>Review Challenge Photos</h1>
+      <h1>Review Challenge Photos.</h1>
       {challenges.map((challenge) => (
         <div key={challenge.ID} className="challenge">
           <button
-            onClick={() => toggleDropdown(challenge.ID)} // Use ID for toggling
+            onClick={() => toggleDropdown(challenge.ID)} 
             className="challenge-dropdown-button"
           >
-            {challenge.Description} {/* Updated to match your data */}
+            {challenge.Description}
           </button>
-          {openChallenge === challenge.ID && (
-            <div className="dropdown-window-overlay">
+          <div className={`dropdown-window-overlay ${openChallenge === challenge.ID ? '' : 'hidden'}`}>
+            {openChallenge === challenge.ID && (
               <div className="dropdown-window">
-                <h2>{challenge.Description} Photos</h2>
                 <div className="photo-list">
-                  {challenge.photos.map((photo) => (
-                    <PhotoItem key={photo.id} photo={photo} />
-                  ))}
+                  {challenge.photos.length > 0 ? (
+                    challenge.photos.map((photo) => (
+                      <PhotoItem key={photo.id} photo={photo} />
+                    ))
+                  ) : (
+                    <p>No photos yet!</p>  
+                  )}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       ))}
     </div>

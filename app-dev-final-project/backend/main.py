@@ -35,7 +35,7 @@ class AttendanceStatus(PyEnum):
 
 class RoleEnum(PyEnum):
     mentee = "mentee"
-    mentor = "mentor"
+    admin = "admin"
 
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
@@ -471,27 +471,6 @@ def update_attendance_points_for_week(week_num: int, session: Session = Depends(
 
 
 
-# Example route: Get all challenges
-# @app.get("/challenges", response_model=List[ChallengeOut])
-# def get_challenges(session: Session = Depends(get_session)):
-#     challenges = session.exec(select(Challenge)).scalars().all()
-
-#     if not challenges:
-#         raise HTTPException(status_code=404, detail="No challenges found")
-    
-#     challenges_out = [
-#         ChallengeOut(
-#             ID=challenge.ID,
-#             Description=challenge.Description,
-#             StartDate=challenge.StartDate,
-#             EndDate=challenge.EndDate,
-#             PointsValue=challenge.PointsValue,
-#             Photos=[photo.FileData for photo in challenge.Photos],
-#         )
-#         for challenge in challenges
-#     ]
-    
-#     return challenges_out
 
 @app.get("/challenges", response_model=List[ChallengeOut])
 def get_challenges(session: Session = Depends(get_session)):
@@ -726,7 +705,24 @@ def deny_photo(photo_id: int, session: SessionDep):
     return {"message": f"Photo ID {photo_id} has been denied", "photo": photo}
 
 
+@app.put("/photos/{photo_id}/pending")
+def deny_photo(photo_id: int, session: SessionDep):
+    # Retrieve the photo by ID
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Check if the photo status is 'pending'
+    if photo.Status == PhotoStatus.pending:
+        raise HTTPException(status_code=400, detail="Only dnied/apprvoved photos can be pended")
+    
+    # Update the status to 'denied'
+    photo.Status = PhotoStatus.pending
+    session.add(photo)
+    session.commit()
+    session.refresh(photo)
 
+    return {"message": f"Photo ID {photo_id} has been rest to pending", "photo": photo}
 
 
 @app.put("/users/team/{team_id}/increase_points")
@@ -783,12 +779,11 @@ def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_
         raise HTTPException(status_code=400, detail="Missing required fields")
 
     # Query the database for a user with the given email
-    user = session.exec(select(User).where(User.Email == email)).first()
+    user = session.exec(select(User).where(User.Email == email)).scalars().first()
+    print(user)
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-
 
     # Simple password check (no hashing for now)
     if user.Password != password:

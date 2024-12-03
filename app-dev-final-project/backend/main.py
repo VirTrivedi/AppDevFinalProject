@@ -1,3 +1,4 @@
+import base64
 from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -476,17 +477,21 @@ def create_challenge(description: str, start_date: datetime, end_date: datetime,
 
 @app.get("/photos/{photo_id}")
 def get_photo(photo_id: int, session: SessionDep):
+    # Retrieve the photo from the database
     photo = session.get(Photo, photo_id)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
-    
-    # Return photo metadata and binary data
+
+    # Convert the binary data to a base64-encoded string
+    file_data_base64 = base64.b64encode(photo.FileData).decode("utf-8")
+
+    # Return the photo metadata and base64-encoded binary data
     return {
         "ID": photo.ID,
         "Status": photo.Status,
         "ChallengeID": photo.ChallengeID,
         "TeamID": photo.TeamID,
-        "FileData": photo.FileData,  # Return binary data as base64 if needed
+        "FileData": file_data_base64,  # Return base64-encoded binary data
     }
 
 

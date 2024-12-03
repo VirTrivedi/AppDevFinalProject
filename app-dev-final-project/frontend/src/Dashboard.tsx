@@ -24,7 +24,6 @@ interface Challenge {
 }
 
 const Dashboard: React.FC = () => {
-  const { person, mentees, mentors, fetchMentees, fetchMentorsForMentee, getCurrentChallenge, fetchChallenges, setLoginStatus } = useAppContext();
   const navigate = useNavigate();
 
   const [teammates, setTeammates] = useState<User[]>([]);
@@ -89,7 +88,7 @@ const Dashboard: React.FC = () => {
   const sortedMentors = [...mentors].sort((a, b) => a.localeCompare(b));
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    const confirmLogout = window.confirm('Are you sure you want to log out?');
     if (confirmLogout) {
       navigate('/login'); // Redirect to login page
     }
@@ -99,8 +98,6 @@ const Dashboard: React.FC = () => {
 
   const handleMouseEnter = (link: string) => setHoveredLink(link);
   const handleMouseLeave = () => setHoveredLink(null);
-
-  
 
   return (
     <div style={styles.page}>
@@ -147,9 +144,10 @@ const Dashboard: React.FC = () => {
           </Link>
         </nav>
       </div>
+      
       <div style={styles.iconContainer}>
-          <img src="/images/bootcamp.png" alt="Group Icon" style={styles.iconImage} />
-        </div>
+        <img src="/images/bootcamp.png" alt="Group Icon" style={styles.iconImage} />
+      </div>
 
       <div style={styles.dots}>
         <img src="/images/Group 4.png" alt="Dots" style={styles.dotsIcons} />
@@ -164,8 +162,8 @@ const Dashboard: React.FC = () => {
           <h2 style={styles.cardTitle}>★ TEAM LEADERBOARD ★</h2>
           <ul style={styles.list}>
             {sortedTeammates.map((teammate) => (
-              <li key={teammate.ID} style={styles.listItem}>
-                ⭐ {teammate.name} - {teammate.points} points
+              <li key={teammate.ID}>
+                ⭐ {teammate.Name} - {teammate.Points} points
               </li>
             ))}
           </ul>
@@ -189,29 +187,10 @@ const Dashboard: React.FC = () => {
             title="Google Calendar"
           ></iframe>
         </div>
-      <div style={styles.section}>
-        <h3>Teammates and Scores:</h3>
-        <ul>
-          {sortedTeammates.map((teammate) => (
-            <li key={teammate.ID}>
-              {teammate.Name} - {teammate.Points} points
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div style={styles.section}>
-        <h3>Mentors:</h3>
-        <ul>
-          {sortedMentors.map((mentor, index) => (
-            <li key={index}>{mentor}</li>
-          ))}
-        </ul>
-      </div>
 
         {/* Weekly Challenge Section */}
         <div style={styles.card3}>
-          <h2 style={styles.cardTitle}>⇢ WEEKLY CHALLENGE ⇠</h2>
+          <h2 style={styles.cardTitle}>⇢WEEKLY CHALLENGE⇠</h2>
           {currentChallenge ? (
             <>
               <p style={styles.challengeText}>{currentChallenge.Description}</p>
@@ -219,9 +198,8 @@ const Dashboard: React.FC = () => {
                 Earn {currentChallenge.PointsValue} points!
               </p>
               <p style={styles.challengeDates}>
-                Valid from{" "}
-                {new Date(currentChallenge.StartDate).toLocaleDateString()} to{" "}
-                {new Date(currentChallenge.EndDate).toLocaleDateString()}
+                Valid from {new Date(currentChallenge.StartDate).toLocaleDateString()} to{' '}
+                  {new Date(currentChallenge.EndDate).toLocaleDateString()}
               </p>
             </>
           ) : (
@@ -235,7 +213,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <button onClick={handleLogout} 
+      <button onClick={handleLogout}
         style={hoveredLink === "handleLogout"
           ? { ...styles.logoutButton, ...styles.logoutButtonHover }
           : styles.logoutButton
@@ -254,7 +232,7 @@ export default Dashboard;
 
 const styles: {
   [key: string]: React.CSSProperties;
-} = {
+ } = {
   page: {
     fontFamily: "'Gill Sans', sans-serif",
     backgroundImage: "linear-gradient(180deg, #FEA85F, #E26159, #E21C61",
@@ -408,17 +386,17 @@ const styles: {
   linkHover1: {
     backgroundColor: "transparent",
     transform: "scale(1.05)",
-    color: "#5EB6AD", 
+    color: "#5EB6AD",
   },
   linkHover2: {
     backgroundColor: "transparent",
     transform: "scale(1.05)",
-    color: "#FEA85F", 
+    color: "#FEA85F",
   },
   linkHover3: {
     backgroundColor: "transparent",
     transform: "scale(1.05)",
-    color: "#FC7E80", 
+    color: "#FC7E80",
   },
   logoutButton: {
     marginTop: "20px",
@@ -432,7 +410,8 @@ const styles: {
     border: "solid 2px",
     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
   },
-
+ 
+ 
   logoutButtonHover: {
     backgroundColor: "#FF2222",
     transform: "scale(1.05)",
@@ -444,4 +423,4 @@ const styles: {
     maxHeight: "400px",
     border: "solid 2px #381631",
   },
-};
+ }; 

@@ -14,7 +14,6 @@ const Leaderboard: React.FC = () => {
     const API_BASE_URL = 'http://127.0.0.1:8000';
 
 
-
     // Fetch mentees from the backend
     const fetchMentees = async () => {
         try {

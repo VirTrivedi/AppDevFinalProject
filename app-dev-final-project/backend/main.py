@@ -48,7 +48,8 @@ class User(SQLModel, table=True):
     Role: RoleEnum = Field(default=RoleEnum.mentee)  # Stored as strings in SQLite
 
     # Relationships
-    Photos: List["Photo"] = Relationship(back_populates="Team")
+    Photos: List["Photo"] = Relationship(back_populates="Users")
+
 # Pydantic models for response validation
 class UserOut(BaseModel):
     ID: int
@@ -86,7 +87,7 @@ class Photo(SQLModel, table=True):
 
     # Relationships
     Challenges: Optional[Challenge] = Relationship(back_populates="Photos")
-    Team: Optional[User] = Relationship(back_populates="Photos")
+    Users: Optional[User] = Relationship(back_populates="Photos")
 
 # Week Model
 class Week(SQLModel, table=True):
@@ -241,19 +242,55 @@ def create_mentee(mentee_data: dict, session: Session = Depends(get_session)):
     }
 
 
-@app.delete("/mentees/{mentee_id}")
-def delete_mentee(mentee_id: int, session: SessionDep):
-    mentee = session.get(User, mentee_id)
+
+@app.get("/users/{user_id}", response_model=UserOut)
+def get_user_by_id(user_id: int, session: Session = Depends(get_session)):
+    # Query the database for the mentee with the specified ID
+    mentee = session.get(User, user_id)  # Use session.get() to fetch by primary key
+    
     if not mentee:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Return the mentee as a Pydantic model
+    mentee_out = UserOut(
+        ID=mentee.ID,
+        Name=mentee.Name,
+        Email=mentee.Email,
+        Points=mentee.Points,
+        Mentors=mentee.Mentors or [],
+        Images=mentee.Images or [],
+        Role=mentee.Role,
+    )
+    return mentee_out
+
+
+@app.delete("/mentees/{mentee_id}", response_model=dict)
+def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):
+    # Fetch the mentee by ID
+    mentee = session.get(User, mentee_id)
+
+    # Check if the mentee exists and has the correct role
+    if not mentee or mentee.Role != RoleEnum.mentee:
         raise HTTPException(status_code=404, detail="Mentee not found")
-    session.delete(mentee)
-    session.commit()
-    return {"ok": True}
+
+    try:
+        # Delete the mentee and commit the transaction
+        session.delete(mentee)
+        session.commit()
+    except Exception as e:
+        # Rollback in case of any error
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error deleting mentee: {e}")
+
+    return {"message": "Mentee deleted successfully"}
 
 
 
 
-############
+############ ENDPOINTS ABOVE THIS CONFIRMED WORK
+
+
+
 
 
 
@@ -432,31 +469,8 @@ def create_challenge(description: str, start_date: datetime, end_date: datetime,
 
 
 
-# Get a specific mentee (user) by ID
-@app.get("/users/{user_id}")
-def get_user_by_id(user_id: int, session: SessionDep):
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
     
-# Dependency for HTTP Basic Authentication
-security = HTTPBasic()
 
-@app.post("/users/authenticate")
-def authenticate_user(credentials: HTTPBasicCredentials, session: SessionDep):
-    # Extract the username and password from the credentials
-    email = credentials.username
-    password = credentials.password
-
-    # Query the database for a user with the given username
-    user = session.exec(select(User).where(User.Email == email)).first()
-
-    # Check if the user exists and the password matches
-    if not user or user.Password != password:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-
-    return user
 
 @app.put("/users/{user_id}/points", status_code=200)
 def increase_user_points(user_id: int, points_to_add: int, session: Session = Depends(get_session)):
@@ -575,3 +589,52 @@ def update_week_status(week_id: int, published_status: AttendanceStatus, session
     session.commit()
     session.refresh(week)
     return week
+
+
+
+security = HTTPBasic()
+
+@app.post("/users/authenticate")
+def authenticate_user(credentials: HTTPBasicCredentials, session: Session = Depends(get_session), response_model=dict):
+    email = credentials.username
+    password = credentials.password
+    if not all([email, password]):
+        raise HTTPException(status_code=400, detail="Missing required fields")
+
+    # Query the database for a user with the given email
+    user = session.exec(select(User).where(User.Email == email)).first()
+ 
+    print(user.__dict__) 
+    if user:
+        password = user.Password  # Access the 'Password' column directly
+        print(password)
+    else:
+        print("User not found.")
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+
+
+    # Simple password check (no hashing for now)
+    if user.Password != password:
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    
+    # Convert the User model to UserOut to return specific fields
+    return UserOut(
+        ID=user.ID,
+        Name=user.Name,
+        Email=user.Email,
+        Points=user.Points,
+        Mentors=user.Mentors or [],
+        Images=user.Images or [],
+        Role=user.Role
+    )
+
+    # if user_out.Password != password:  # Make sure to hash and compare passwords in production
+    #     raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    # return {
+    #     "message": "User authenticated successfully",
+    #     "user_id": user_out.ID  # Accessing the ID directly from the user object
+    # }

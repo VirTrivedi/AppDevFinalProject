@@ -91,9 +91,19 @@ class Photo(SQLModel, table=True):
 
 # Week Model
 class Week(SQLModel, table=True):
+    __tablename__ = 'week'
     ID: Optional[int] = Field(default=None, primary_key=True)
     Published: AttendanceStatus = Field(nullable=False)  # Stored as strings in SQLite
     DateActive: datetime = Field(nullable=False)
+
+class WeekOut(BaseModel):
+    ID: int
+    Published: AttendanceStatus  # To represent the status of the week (pending/approved/denied)
+    DateActive: datetime  # The date the week is active
+
+    class Config:
+        orm_mode = True  # Allow ORM models to be treated as dictionaries
+
 
 
 
@@ -145,18 +155,6 @@ def on_startup():
     create_db_and_tables()
 
 
-from pydantic import BaseModel
-from typing import List
-
-# Define the output schema
-class UserOut(BaseModel):
-    ID: int
-    Name: str
-    Email: str
-    Points: int
-    Mentors: List[str]
-    Images: List[str]
-    Role: RoleEnum
 
 @app.get("/mentees", response_model=List[UserOut])
 def get_all_mentees(session: Session = Depends(get_session)):
@@ -283,6 +281,31 @@ def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=400, detail=f"Error deleting mentee: {e}")
 
     return {"message": "Mentee deleted successfully"}
+
+
+
+@app.get("/weeks", response_model=List[WeekOut])
+def get_all_weeks(session: Session = Depends(get_session)):  # Adjust if needed for your dependency
+    weeks = session.exec(select(Week)).all()  # Correct for fetching all weeks
+
+    if not weeks:
+        raise HTTPException(status_code=404, detail="No weeks found")
+    print(weeks)
+
+    # Transform ORM objects into Pydantic models
+    week_out = [
+        WeekOut(
+            ID=week.ID,
+            Published=week.Published,
+            DateActive=week.DateActive,
+        )
+        for week in weeks
+    ]
+    return week_out
+
+
+
+
 
 
 
@@ -554,10 +577,7 @@ async def get_attendance_data(week: int):
     return {"week": week, "attendance_data": data}
 
 
-@app.get("/weeks")
-def get_all_weeks(session: SessionDep):
-    weeks = session.exec(select(Week)).all()
-    return weeks
+
 
 @app.get("/weeks/{week_id}")
 def get_week_by_id(week_id: int, session: SessionDep):

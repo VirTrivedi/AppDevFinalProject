@@ -2,7 +2,8 @@ import base64
 from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, ForeignKey, Enum, Column, SQLAlchemyError
+from sqlalchemy import select, ForeignKey, Enum, Column
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
@@ -407,6 +408,7 @@ def update_week_status(week_id: int, published_status: AttendanceStatus, session
     session.add(week)
     session.commit()
     session.refresh(week)
+
     return week
 
 # below: google sheet stuff
@@ -433,7 +435,7 @@ async def get_google_sheet_data(week_num: int):
     return values
 
 
-@app.post("/api/attendance/update")
+@app.post("/attendance")
 def update_attendance_points_for_week(week_num: int, session: Session = Depends(get_session)):
     # Fetch the attendance data for the given week number (e.g., week 1, 2, etc.)
     attendance_data = asyncio.run(get_google_sheet_data(week_num=week_num))  # Fetch specific week data

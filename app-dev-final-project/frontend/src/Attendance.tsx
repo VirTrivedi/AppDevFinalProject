@@ -16,6 +16,7 @@ const Attendance = () => {
   const [attendanceData, setAttendanceData] = useState<boolean[]>([]); // Holds publication status
   const [isLoading, setIsLoading] = useState(true); // Loading state
   const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+  const [published, setPublished] = useState(true);
   const API_BASE_URL = 'http://127.0.0.1:8000';
 
   // Fetch all weeks from the backend
@@ -31,31 +32,25 @@ const Attendance = () => {
   };
 
   // Publish a specific week
-  const publishWeek = async (weekId: number) => {
-    try {
-      const response = await fetch(`/weeks/${weekId}/publish`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ published_status: "approved" }), // Update status to "approved"
-      });
+  const publishWeek = async (weekId: number, publishedStatus: boolean) => {
 
-      if (!response.ok) {
-        throw new Error("Failed to publish the week");
-      }
-      const updatedWeek = await response.json();
-      console.log("Week published:", updatedWeek);
-    } catch (error) {
-      console.error("Error publishing week:", error);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/weeks/${weekId}/publish`);
+      setPublished(true);
+
+      setWeeks(response.data);
+    } catch (error){
+      console.error("Error fetching weeks:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
+  
   // Handle the click event to publish a week
   const handleClick = async (weekId: number, index: number) => {
     if (!attendanceData[index]) {
       try {
-        await publishWeek(weekId);
+        await publishWeek(weekId,true);
         setAttendanceData((prevData) => {
           const newData = [...prevData];
           newData[index] = true; // Mark as published

@@ -2,7 +2,7 @@ import base64
 from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, ForeignKey, Enum, Column
+from sqlalchemy import select, ForeignKey, Enum, Column, SQLAlchemyError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -39,6 +39,10 @@ class AttendanceStatus(PyEnum):
 class RoleEnum(PyEnum):
     mentee = "mentee"
     admin = "admin"
+
+class UpdateMentorsRequest(BaseModel):
+    name: str
+    mentors: List[str]
 
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
@@ -326,6 +330,36 @@ def get_users_by_team(team_id: int, session: Session = Depends(get_session)):
         )
         for mentee in mentees
     ]
+
+@app.post("/mentees/assign_mentors")
+def update_mentors(data: UpdateMentorsRequest, session: Session = Depends(get_session)):
+    """
+    Update the list of mentors for a specific mentee.
+    """
+    try:
+        # Fetch the user by name
+        user = session.exec(select(User).where(User.Name == data.name)).first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if user.Role != RoleEnum.mentee:
+            raise HTTPException(status_code=400, detail="The user is not a mentee")
+
+        # Update the Mentors field
+        user.Mentors = data.mentors
+
+        # Commit and refresh the session
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
+        return {"message": "Mentors updated successfully", "user": UserOut.from_orm(user)}
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while updating mentors")
+
 
 @app.delete("/mentees/{mentee_id}", response_model=dict)
 def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):

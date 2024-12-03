@@ -92,9 +92,19 @@ class Photo(SQLModel, table=True):
 
 # Week Model
 class Week(SQLModel, table=True):
+    __tablename__ = 'week'
     ID: Optional[int] = Field(default=None, primary_key=True)
     Published: AttendanceStatus = Field(nullable=False)  # Stored as strings in SQLite
     DateActive: datetime = Field(nullable=False)
+
+class WeekOut(BaseModel):
+    ID: int
+    Published: AttendanceStatus  # To represent the status of the week (pending/approved/denied)
+    DateActive: datetime  # The date the week is active
+
+    class Config:
+        orm_mode = True  # Allow ORM models to be treated as dictionaries
+
 
 
 
@@ -146,18 +156,6 @@ def on_startup():
     create_db_and_tables()
 
 
-from pydantic import BaseModel
-from typing import List
-
-# Define the output schema
-class UserOut(BaseModel):
-    ID: int
-    Name: str
-    Email: str
-    Points: int
-    Mentors: List[str]
-    Images: List[str]
-    Role: RoleEnum
 
 @app.get("/mentees", response_model=List[UserOut])
 def get_all_mentees(session: Session = Depends(get_session)):
@@ -287,6 +285,31 @@ def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=400, detail=f"Error deleting mentee: {e}")
 
     return {"message": "Mentee deleted successfully"}
+
+
+
+@app.get("/weeks", response_model=List[WeekOut])
+def get_all_weeks(session: Session = Depends(get_session)):  # Adjust if needed for your dependency
+    weeks = session.exec(select(Week)).all()  # Correct for fetching all weeks
+
+    if not weeks:
+        raise HTTPException(status_code=404, detail="No weeks found")
+    print(weeks)
+
+    # Transform ORM objects into Pydantic models
+    week_out = [
+        WeekOut(
+            ID=week.ID,
+            Published=week.Published,
+            DateActive=week.DateActive,
+        )
+        for week in weeks
+    ]
+    return week_out
+
+
+
+
 
 
 
@@ -550,10 +573,7 @@ async def get_attendance_data(week: int):
     return {"week": week, "attendance_data": data}
 
 
-@app.get("/weeks")
-def get_all_weeks(session: SessionDep):
-    weeks = session.exec(select(Week)).all()
-    return weeks
+
 
 @app.get("/weeks/{week_id}")
 def get_week_by_id(week_id: int, session: SessionDep):
@@ -586,33 +606,35 @@ def update_week_status(week_id: int, published_status: AttendanceStatus, session
     session.refresh(week)
     return week
 
-security = HTTPBasic()
 
-@app.post("/users/authenticate")
-def authenticate_user(credentials: HTTPBasicCredentials, session: Session = Depends(get_session), response_model=dict):
-    email = credentials.username
-    password = credentials.password
+
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/users/authenticate", response_model=UserOut)
+def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_session)):
+    # Extract email and password from the request body
+    email = auth_request.email
+    password = auth_request.password
+
     if not all([email, password]):
         raise HTTPException(status_code=400, detail="Missing required fields")
 
     # Query the database for a user with the given email
     user = session.exec(select(User).where(User.Email == email)).first()
- 
-    print(user.__dict__) 
-    if user:
-        password = user.Password  # Access the 'Password' column directly
-        print(password)
-    else:
-        print("User not found.")
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+
+
     # Simple password check (no hashing for now)
     if user.Password != password:
         raise HTTPException(status_code=400, detail="Incorrect password")
-    
-    # Convert the User model to UserOut to return specific fields
+
+    # Convert the User model to UserOut to return only the required fields
     return UserOut(
         ID=user.ID,
         Name=user.Name,
@@ -622,11 +644,3 @@ def authenticate_user(credentials: HTTPBasicCredentials, session: Session = Depe
         Images=user.Images or [],
         Role=user.Role
     )
-
-    # if user_out.Password != password:  # Make sure to hash and compare passwords in production
-    #     raise HTTPException(status_code=401, detail="Invalid username or password")
-
-    # return {
-    #     "message": "User authenticated successfully",
-    #     "user_id": user_out.ID  # Accessing the ID directly from the user object
-    # }

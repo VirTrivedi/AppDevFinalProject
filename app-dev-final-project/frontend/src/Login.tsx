@@ -1,24 +1,43 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAppContext } from './AppContext';
+import axios from 'axios';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { authenticateUser, setLoginStatus } = useAppContext();
   const navigate = useNavigate();
 
+  const API_BASE_URL = 'http://127.0.0.1:8000';
+
+  const authenticateUser = async (email: string, password: string) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/users/authenticate`, {
+        username: email,
+        password: password,
+      });
+      return response.data; // Assuming the backend returns the user object on success
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return null; // Return null on failure
+    }
+  };
+
   const handleLogin = async () => {
-    if (email == 'admin' && password == '1234') {
-      alert('Admin login successful!');
-      navigate('/admin'); // Redirect to admin dashboard
-    } else if (email.trim() && password.trim()) {
+    if (email.trim() && password.trim()) {
       try {
-        const success = await authenticateUser(email, password);
-        if (success) {
+        const user = await authenticateUser(email, password);
+        if (user) {
           alert('Login successful!');
-          setLoginStatus(true);
-          navigate('/dashboard'); // Redirect to dashboard
+          localStorage.setItem('user', JSON.stringify(user)); // Save user to localStorage
+
+          // Check the user's role and navigate accordingly
+          if (user.Role === 'admin') {
+            navigate('/admin'); // Redirect to admin dashboard
+          } else if (user.Role === 'mentee') {
+            navigate('/dashboard'); // Redirect to mentee dashboard
+          } else {
+            alert('Unknown user role. Please contact support.');
+          }
         } else {
           alert('Invalid email or password.');
         }

@@ -139,12 +139,10 @@
 //   );
 // };
 
-// export default MediaReviewPage;
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 type Photo = {
   id: number;
@@ -195,6 +193,7 @@ const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
       console.error("Error resetting photo status:", error);
     }
   };
+
 
   return (
     <div style={styles.photoItem}>
@@ -294,7 +293,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: "0",
     fontFamily: "'Gill Sans', sans-serif",
     width: "100vw",
-    background: "radial-gradient( #002066, #3A1258)",
+    
   },
   container: {
     display: "flex",
@@ -308,11 +307,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxShadow: "0 8px 20px rgba(0, 0, 0, 0.2)",
   },
   title: {
-    fontSize: "3rem",
+    fontSize: "100px",
     marginBottom: "30px",
     fontWeight: "bold",
     color: "#3A1258",
     textAlign: "center",
+    marginTop: "100%",
   },
   challenge: {
     marginBottom: "20px",

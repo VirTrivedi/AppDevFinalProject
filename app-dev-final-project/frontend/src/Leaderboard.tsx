@@ -90,11 +90,19 @@ const Leaderboard: React.FC = () => {
   
         <div style={styles.leaderboardList}>
           {allParticipants.map((participant, index) => (
-            <div key={participant.ID || index} style={styles.leaderboardItem}>
+            <div 
+              key={participant.ID || index} 
+              style={{
+                ...styles.leaderboardItem,
+                ...(index === 0 && styles.firstPlace),
+                ...(index === 1 && styles.secondPlace),
+                ...(index === 2 && styles.thirdPlace),
+              }}
+            >
               <div style={styles.starContainer}>
                 {index < 3 && (
                   <img
-                    src={`/assets/star-${index + 1}.png`}
+                    src={`/images/star-${index + 1}.png`}
                     alt={`${index + 1} place`}
                     style={styles.starIcon}
                   />
@@ -237,6 +245,24 @@ const styles: {
     padding: "15px 20px",
     boxShadow: "8px 10px 15px -6px rgb(99, 61, 99)",
   },
+  firstPlace: {
+    backgroundColor: "#fffb9a", // Light yellow background
+    fontSize: "20px", // Larger font size for the first place
+    fontWeight: "bold",
+    padding: "20px 25px", // Larger padding
+  },
+  secondPlace: {
+    backgroundColor: "#f4f4f4", // Slightly different background color for second place
+    fontSize: "19px", // Slightly larger font size for the second place
+    fontWeight: "bold",
+    padding: "18px 23px", // Slightly larger padding
+  },
+  thirdPlace: {
+    backgroundColor: "#ffd5cd", // Light pink background for third place
+    fontSize: "18px", // Slightly larger font size for the third place
+    fontWeight: "bold",
+    padding: "18px 22px", // Slightly larger padding
+  },
   starContainer: {
     width: "50px",
     height: "50px",
@@ -245,8 +271,8 @@ const styles: {
     alignItems: "center",
   },
   starIcon: {
-    width: "50px",
-    height: "50px",
+    width: "80px",
+    height: "80px",
   },
   userInfo: {
     flex: 1,

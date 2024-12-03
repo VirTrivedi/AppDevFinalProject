@@ -7,7 +7,7 @@ type Photo = {
   id: number;
   url: string;
   caption: string;
-  status: "pending" | "approved" | "rejected";
+  status: "published" | "unpublished";
 };
 
 type PhotoItemProps = {

@@ -87,142 +87,215 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const UserManagement = () => {
-    // State to hold mentee data (Name and Mentors)
-    const [menteeData, setMenteeData] = useState({
-        Name: "",
-        Mentors: [] as string[],  // Array to hold mentor names
-    });
+const UserManagement: React.FC = () => {
+  const [menteeData, setMenteeData] = useState({
+    Name: "",
+    Mentors: [] as string[],
+  });
+  const [message, setMessage] = useState("");
+  const [menteeToDelete, setMenteeToDelete] = useState("");
 
-    // State to manage success and error messages
-    const [message, setMessage] = useState("");
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setMenteeData({ ...menteeData, [name]: value });
+  };
 
-    // State for deleting a mentee by name
-    const [menteeToDelete, setMenteeToDelete] = useState("");
+  const handleMentorsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedMentors = Array.from(e.target.selectedOptions, option => option.value);
+    setMenteeData({ ...menteeData, Mentors: selectedMentors });
+  };
 
-    // Handle input changes for mentee name (input fields)
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setMenteeData({ ...menteeData, [name]: value });
-    };
+  const handleAssignMentors = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage("");
+    try {
+      const response = await axios.post("http://localhost:8000/mentees/assign_mentors", {
+        Name: menteeData.Name,
+        Mentors: menteeData.Mentors,
+      });
+      setMessage(response.data.message);
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
+    }
+  };
 
-    // Handle multi-select changes for mentors (select box)
-    const handleMentorsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedMentors = Array.from(e.target.selectedOptions, option => option.value);
-        setMenteeData({ ...menteeData, Mentors: selectedMentors });
-    };
+  const handleDeleteAllMentees = async () => {
+    setMessage("");
+    try {
+      const response = await axios.post("http://localhost:8000/mentees/delete-all", menteeData);
+      setMessage(response.data.message);
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
+    }
+  };
 
-    // Handle form submission for assigning mentors
-    const handleAssignMentors = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setMessage(""); // Clear previous messages
+  const handleDeleteMenteeByName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage("");
+    try {
+      const response = await axios.delete(
+        `http://localhost:8000/mentees/by-name/${menteeToDelete}`
+      );
+      setMessage(response.data.message);
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
+    }
+  };
 
-        try {
-            const response = await axios.post("http://localhost:8000/mentees/assign_mentors", {
-                Name: "Samai", // Assuming menteeName is defined in your state
-                Mentors: "eek", // Assuming selectedMentors is an array of mentor names
-              },);
-            setMessage(response.data.message); // Display success message from the server
-        } catch (error: any) {
-            if (error.response) {
-                // Backend error response
-                setMessage(`Error: ${error.response.data.detail || error.message}`);
-            } else {
-                setMessage(`Error: ${error.message}`);
-            }
-        }
-    };
-     // Handle deleting all mentees
-     const handleDeleteAllMentees = async () => {
-        setMessage(""); // Clear previous messages
-
-        try {
-            const response = await axios.post("http://localhost:8000/mentees/delete-all", menteeData);
-            setMessage(response.data.message); // Display success message from the server
-        } catch (error: any) {
-            if (error.response) {
-                // Backend error response
-                setMessage(`Error: ${error.response.data.detail || error.message}`);
-            } else {
-                setMessage(`Error: ${error.message}`);
-            }
-        }
-    };
-
-    // Handle deleting a single mentee by name
-    const handleDeleteMenteeByName = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setMessage(""); // Clear previous messages
-
-        try {
-            const response = await axios.delete(
-                `http://localhost:8000/mentees/by-name/${menteeToDelete}`
-            );
-            setMessage(response.data.message); // Display success message from the server
-        } catch (error: any) {
-            if (error.response) {
-                setMessage(`Error: ${error.response.data.detail || error.message}`);
-            } else {
-                setMessage(`Error: ${error.message}`);
-            }
-        }
-    };
-
-    return (
-        <div>
-            <h1>Assign Mentors to Mentee</h1>
-            <form onSubmit={handleAssignMentors}>
-                <div>
-                    <label>Name of Mentee:</label>
-                    <input
-                        type="text"
-                        name="Name"
-                        value={menteeData.Name}
-                        onChange={handleInputChange}
-                        placeholder="Enter mentee's name"
-                        required
-                    />
-                </div>
-                <div>
-                    <label>Mentors:</label>
-                    <select
-                        name="Mentors"
-                        value={menteeData.Mentors}
-                        onChange={handleMentorsChange}
-                        multiple
-                        required
-                    >
-                        <option value="Mentor1">Mentor1</option>
-                        <option value="Mentor2">Mentor2</option>
-                        <option value="Mentor3">Mentor3</option>
-                        <option value="Mentor4">Mentor4</option>
-                    </select>
-                </div>
-                <button type="submit">Assign Mentors</button>
-            </form>
-            {/* Button to Delete All Mentees */}
-            <button onClick={handleDeleteAllMentees}>
-                Remove All Mentees
-            </button>
-
-            <h2>Delete Mentee by Name</h2>
-            <form onSubmit={handleDeleteMenteeByName}>
-                <div>
-                    <label>Name of Mentee:</label>
-                    <input
-                        type="text"
-                        value={menteeToDelete}
-                        onChange={(e) => setMenteeToDelete(e.target.value)}
-                        placeholder="Enter mentee's name"
-                        required
-                    />
-                </div>
-                <button type="submit">Delete Mentee</button>
-            </form>
-            {/* Display messages */}
-            {message && <p>{message}</p>}
+  return (
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h1 style={styles.title}>🌟 User Management 🌟</h1>
+        <div style={styles.formGroup}>
+          <h2 style={styles.subtitle}>Assign Mentors to Mentee</h2>
+          <form onSubmit={handleAssignMentors} style={styles.form}>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Mentee Name:</label>
+              <input
+                type="text"
+                name="Name"
+                value={menteeData.Name}
+                onChange={handleInputChange}
+                style={styles.input}
+                placeholder="Enter mentee's name"
+                required
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Mentors:</label>
+              <select
+                name="Mentors"
+                value={menteeData.Mentors}
+                onChange={handleMentorsChange}
+                multiple
+                style={styles.select}
+                required
+              >
+                <option value="Mentor1">Mentor1</option>
+                <option value="Mentor2">Mentor2</option>
+                <option value="Mentor3">Mentor3</option>
+                <option value="Mentor4">Mentor4</option>
+              </select>
+            </div>
+            <button type="submit" style={styles.button}>Assign Mentors</button>
+          </form>
         </div>
-    );
+
+        <div style={styles.formGroup}>
+          <button onClick={handleDeleteAllMentees} style={styles.button}>Remove All Mentees</button>
+        </div>
+
+        <h2 style={styles.subtitle}>Delete Mentee by Name</h2>
+        <form onSubmit={handleDeleteMenteeByName} style={styles.form}>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Mentee Name:</label>
+            <input
+              type="text"
+              value={menteeToDelete}
+              onChange={(e) => setMenteeToDelete(e.target.value)}
+              style={styles.input}
+              placeholder="Enter mentee's name"
+              required
+            />
+          </div>
+          <button type="submit" style={styles.button}>Delete Mentee</button>
+        </form>
+
+        {message && <p style={styles.message}>{message}</p>}
+      </div>
+    </div>
+  );
 };
 
 export default UserManagement;
+
+const styles: { [key: string]: React.CSSProperties } = {
+  page: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    margin: '0',
+    fontFamily: "'Gill Sans', sans-serif",
+    width: '100vw',
+    background: 'radial-gradient( #002066, #3A1258)',
+  },
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    maxHeight: '580px',
+    alignItems: 'center',
+    maxWidth: '800px',
+    padding: '40px',
+    borderRadius: '20px',
+    background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',
+    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
+  },
+  title: {
+    fontSize: '3rem',
+    marginBottom: '30px',
+    fontWeight: 'bold',
+    color: '#3A1258',
+  },
+  subtitle: {
+    fontSize: '2rem',
+    color: '#3A1258',
+    fontWeight: 'bold',
+    marginBottom: '20px',
+  },
+  form: {
+    width: '100%',
+  },
+  formGroup: {
+    marginBottom: '30px',
+    width: '100%',
+  },
+  label: {
+    fontSize: '1.5rem',
+    color: '#3A1258',
+    fontWeight: 'bold',
+    marginBottom: '5px',
+    display: 'block',
+  },
+  input: {
+    width: '90%',
+    padding: '15px',
+    borderRadius: '10px',
+    border: '3px solid #FFA99F',
+    backgroundColor: '#FFF4E6',
+    fontSize: '1.2rem',
+    color: '#3A1258',
+    outline: 'none',
+    transition: '0.3s',
+  },
+  select: {
+    width: '90%',
+    padding: '15px',
+    borderRadius: '10px',
+    border: '3px solid #FFA99F',
+    backgroundColor: '#FFF4E6',
+    fontSize: '1.2rem',
+    color: '#3A1258',
+    outline: 'none',
+    transition: '0.3s',
+  },
+  button: {
+    padding: '10px 20px',
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: '#fff',
+    backgroundColor: '#FF6F61',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s',
+  },
+  message: {
+    fontSize: '1.2rem',
+    color: '#3A1258',
+    marginTop: '20px',
+  },
+};

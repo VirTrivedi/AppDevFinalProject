@@ -144,18 +144,6 @@ const Dashboard: React.FC = () => {
           >
             Upload a Photo
           </Link>
-          <Link
-            to="/photos"
-            style={
-              hoveredLink === "photos"
-                ? { ...styles.link, ...styles.linkHover3 }
-                : styles.link
-            }
-            onMouseEnter={() => handleMouseEnter("photos")}
-            onMouseLeave={handleMouseLeave}
-          >
-            View Uploaded Photos
-          </Link>
         </nav>
       </div>
       

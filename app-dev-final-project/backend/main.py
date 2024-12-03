@@ -473,7 +473,28 @@ def create_challenge(description: str, start_date: datetime, end_date: datetime,
         raise HTTPException(status_code=400, detail="Error creating challenge. Duplicate data or invalid inputs.")
     return new_challenge
 
+
+@app.get("/photos/{photo_id}")
+def get_photo(photo_id: int, session: SessionDep):
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Return photo metadata and binary data
+    return {
+        "ID": photo.ID,
+        "Status": photo.Status,
+        "ChallengeID": photo.ChallengeID,
+        "TeamID": photo.TeamID,
+        "FileData": photo.FileData,  # Return binary data as base64 if needed
+    }
+
+
+
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
+
+
+
 
 @app.post("/photos/new")
 def create_photo(
@@ -547,20 +568,6 @@ def remove_denied_photos(session: SessionDep):
     session.commit()
     return {"message": f"{len(denied_photos)} denied photos removed successfully"}
 
-@app.get("/photos/{photo_id}")
-def get_photo(photo_id: int, session: SessionDep):
-    photo = session.get(Photo, photo_id)
-    if not photo:
-        raise HTTPException(status_code=404, detail="Photo not found")
-    
-    # Return photo metadata and binary data
-    return {
-        "ID": photo.ID,
-        "Status": photo.Status,
-        "ChallengeID": photo.ChallengeID,
-        "TeamID": photo.TeamID,
-        "FileData": photo.FileData,  # Return binary data as base64 if needed
-    }
 
 @app.get("/photos/{photo_id}/download")
 def download_photo(photo_id: int, session: SessionDep):

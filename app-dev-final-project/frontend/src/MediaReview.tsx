@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 type Photo = {
   id: number;
@@ -29,7 +29,6 @@ const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
   const handleApprove = async () => {
     setStatus("approved");
     try {
-   
       await axios.patch(`${API_BASE_URL}/photos/${photo.id}/approve`, { status: "approved" });
     } catch (error) {
       console.error("Error updating photo status:", error);
@@ -39,7 +38,7 @@ const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
   const handleReject = async () => {
     setStatus("rejected");
     try {
-      await axios.patch(`${API_BASE_URL}/api/photos/${photo.id}`, { status: "rejected" });
+      await axios.patch(`${API_BASE_URL}/photos/${photo.id}/deny`, { status: "rejected" });
     } catch (error) {
       console.error("Error updating photo status:", error);
     }
@@ -48,7 +47,7 @@ const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
   const handleReset = async () => {
     setStatus("pending");
     try {
-      await axios.patch(`${API_BASE_URL}/api/photos/${photo.id}`, { status: "pending" });
+      await axios.patch(`${API_BASE_URL}/photos/${photo.id}/pending`, { status: "pending" });
     } catch (error) {
       console.error("Error resetting photo status:", error);
     }
@@ -81,13 +80,22 @@ const MediaReviewPage: React.FC = () => {
   useEffect(() => {
     const loadChallenges = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/challenges`); // change this to get challenges ordered.
+        const response = await axios.get(`${API_BASE_URL}/challenges`);
         const fetchedChallenges = response.data;
+
         if (Array.isArray(fetchedChallenges)) {
           setChallenges(fetchedChallenges);
         } else {
           console.error("Fetched data is not an array", fetchedChallenges);
         }
+
+        const challengesWithPhotos = fetchedChallenges.map((challenge: Challenge) => ({
+          ...challenge,
+          photos: challenge.photos || [], // Fallback to empty array if photos is undefined or null
+        }));
+
+        setChallenges(challengesWithPhotos);
+
       } catch (error) {
         console.error("Error fetching challenges:", error);
       }
@@ -110,18 +118,21 @@ const MediaReviewPage: React.FC = () => {
           >
             {challenge.Description}
           </button>
-          {openChallenge === challenge.ID && (
-            <div className="dropdown-window-overlay">
+          <div className={`dropdown-window-overlay ${openChallenge === challenge.ID ? '' : 'hidden'}`}>
+            {openChallenge === challenge.ID && (
               <div className="dropdown-window">
-                <h2>{challenge.Description} Photos</h2>
                 <div className="photo-list">
-                  {challenge.photos.map((photo) => (
-                    <PhotoItem key={photo.id} photo={photo} />
-                  ))}
+                  {challenge.photos.length > 0 ? (
+                    challenge.photos.map((photo) => (
+                      <PhotoItem key={photo.id} photo={photo} />
+                    ))
+                  ) : (
+                    <p>No photos yet!</p>  
+                  )}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       ))}
     </div>

@@ -26,7 +26,7 @@ const AdminDashboard: React.FC = () => {
           <Link to="/leaderboard" style={styles.button}>LEADERBOARD</Link>
           <Link to="/media" style={styles.button}>MEDIA REVIEW</Link>
           <Link to="/attendance" style={styles.button}>ATTENDANCE</Link>
-          <Link to="/usermanagement" style={styles.button}>USER MANAGEMENT</Link>
+          <Link to="/management" style={styles.button}>USER MANAGEMENT</Link>
         </div>
         <button onClick={handleLogout}
         style={hoveredLink === "handleLogout"

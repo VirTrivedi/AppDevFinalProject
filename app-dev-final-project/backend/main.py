@@ -829,7 +829,7 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
     return mentees_out
 
 
-@app.delete("/mentees", response_model=dict)
+@app.delete("/mentees/delete/all", response_model=dict)
 def delete_all_mentees(session: Session = Depends(get_session)):
    try:
         # Query all users with the role of 'mentee'

@@ -39,7 +39,7 @@ class AttendanceStatus(PyEnum):
 class RoleEnum(PyEnum):
     mentee = "mentee"
     admin = "admin"
-
+    
 class UpdateMentorsRequest(BaseModel):
     name: str
     mentors: List[str]
@@ -329,12 +329,12 @@ def get_users_by_team(team_id: int, session: Session = Depends(get_session)):
             Points=mentee.Points,
             Mentors=mentee.Mentors or [],
             Images=mentee.Images or [],
-            Role=mentee.Role,
+            Role=mentee.Role,            
             TeamID=mentee.TeamID
+
         )
         for mentee in mentees
     ]
-
 @app.post("/mentees/assign_mentors")
 def update_mentors(data: UpdateMentorsRequest, session: Session = Depends(get_session)):
     """
@@ -863,6 +863,7 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
             Images=mentee.Images or [],
             Role=mentee.Role,
             TeamID=mentee.TeamID
+
         )
         for mentee in mentees
     ]
@@ -890,3 +891,24 @@ def delete_all_mentees(session: Session = Depends(get_session)):
         # Rollback in case of any error
         session.rollback()
         raise HTTPException(status_code=400, detail=f"Error deleting mentees: {str(e)}")
+   
+   
+@app.delete("/mentees/by-name/{mentee_name}", response_model=dict)
+def delete_mentee_by_name(mentee_name: str, session: Session = Depends(get_session)):
+    # Fetch the mentee by Name
+    mentee = session.query(User).filter(User.Name == mentee_name, User.Role == RoleEnum.mentee).first()
+
+    # Check if the mentee exists and has the correct role
+    if not mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
+
+    try:
+        # Delete the mentee and commit the transaction
+        session.delete(mentee)
+        session.commit()
+    except Exception as e:
+        # Rollback in case of any error
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error deleting mentee: {e}")
+
+    return {"message": f"Mentee '{mentee_name}' deleted successfully"}

@@ -96,7 +96,7 @@ const Attendance = () => {
           ? "Published"
           : isUpcoming
           ? "Upcoming"
-          : "Assign attendance points"}
+          : "Assign weekly attendance and homework points"}
       </button>
     );
   };

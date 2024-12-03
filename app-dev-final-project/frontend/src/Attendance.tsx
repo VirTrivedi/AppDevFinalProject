@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
 
-// Define PublishedStatus enum based on the backend model
-type PublishedStatus = "published" | "unpublished"
+// Define AttendanceStatus enum based on the backend model
+type AttendanceStatus = "pending" | "approved" | "denied";
 
 // Define the WeekOut model
 interface WeekOut {
   ID: number;
-  Published: PublishedStatus;
+  Published: AttendanceStatus;
   DateActive: string; // ISO date string
 }
 
@@ -24,7 +24,6 @@ const Attendance = () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/weeks`);
       setWeeks(response.data);
-      setAttendanceData(response.data.map((week: WeekOut) => week.Published === "published"));
     } catch (error) {
       console.error("Error fetching weeks:", error);
     } finally {
@@ -32,23 +31,18 @@ const Attendance = () => {
     }
   };
 
-  const publishWeek = async (weekId: number) => {
-    try {
-      const response = await fetch(`/weeks/${weekId}/publish`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ published_status: "approved" }), // Update status to "approved"
-      });
+  // Publish a specific week
+  const publishWeek = async (weekId: number, publishedStatus: boolean) => {
 
-      if (!response.ok) {
-        throw new Error("Failed to publish the week");
-      }
-      const updatedWeek = await response.json();
-      console.log("Week published:", updatedWeek);
-    } catch (error) {
-      console.error("Error publishing week:", error);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/weeks/${weekId}/publish`);
+      setPublished(true);
+
+      setWeeks(response.data);
+    } catch (error){
+      console.error("Error fetching weeks:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -71,10 +65,10 @@ const Attendance = () => {
 
   // Render the publish/attendance button
   const renderButton = (
-    week: WeekOut, // Directly pass the week object
+    isPublished: boolean,
+    week: WeekOut,
     index: number
   ) => {
-    const isPublished = week.Published === "published"; // Check if Published status is "published"
     const weekDate = new Date(week.DateActive).getTime() / 1000;
     const isUpcoming = currentTime < weekDate;
 
@@ -119,7 +113,7 @@ const Attendance = () => {
             <span>
               Week {index + 1} ({new Date(week.DateActive).toLocaleDateString()})
             </span>
-            {renderButton(week, index)} {/* Pass the correct parameters */}
+            {renderButton(attendanceData[index], week, index)}
           </div>
         ))
       )}

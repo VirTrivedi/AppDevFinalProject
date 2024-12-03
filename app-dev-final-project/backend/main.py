@@ -76,6 +76,18 @@ class Challenge(SQLModel, table=True):
     # Relationships
     Photos: List["Photo"] = Relationship(back_populates="Challenges")
 
+class ChallengeOut(BaseModel):
+    ID: int
+    Description: str
+    StartDate: datetime
+    EndDate: datetime
+    PointsValue: int
+    # Optional field to include associated photos
+    Photos: Optional[List[str]] = None
+
+    class Config:
+        orm_mode = True 
+
 # Photo Model
 class Photo(SQLModel, table=True):
     ID: Optional[int] = Field(default=None, primary_key=True)
@@ -400,9 +412,32 @@ async def get_attendance_data(week: int):
     return {"week": week, "attendance_data": data}
 
 
+# Example route: Get all challenges
+@app.get("/challenges", response_model=List[ChallengeOut])
+def get_challenges(session: Session = Depends(get_session)):
+    challenges = session.exec(select(Challenge)).scalars().all()
 
+    if not challenges:
+        raise HTTPException(status_code=404, detail="No challenges found")
+    
+    challenges_out = [
+        ChallengeOut(
+            ID=challenge.ID,
+            Description=challenge.Description,
+            StartDate=challenge.StartDate,
+            EndDate=challenge.EndDate,
+            PointsValue=challenge.PointsValue,
+            Photos=challenge.Photos,
+        )
+        for challenge in challenges
+    ]
+    
+    return challenges_out
 
-
+@app.get("/challenges/ordered")
+def get_challenges_ordered(session: SessionDep):
+    challenges = session.exec(select(Challenge).order_by(Challenge.ID)).all()
+    return challenges
 
 
 ############ ENDPOINTS ABOVE THIS CONFIRMED WORK
@@ -549,15 +584,9 @@ def deny_photo(photo_id: int, session: SessionDep):
 
 
 
-# Example route: Get all challenges
-@app.get("/challenges")
-def get_challenges(session: SessionDep):
-    return session.exec(select(Challenge)).all()
 
-@app.get("/challenges/ordered")
-def get_challenges_ordered(session: SessionDep):
-    challenges = session.exec(select(Challenge).order_by(Challenge.ID)).all()
-    return challenges
+
+
 
 # Example route: Create a new challenge
 @app.post("/challenges/new")

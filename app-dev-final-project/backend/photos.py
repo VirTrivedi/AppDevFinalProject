@@ -8,11 +8,12 @@ cur = con.cursor()
 
 # Sample photo data with file names that match the actual files in the 'assets' folder
 photosData = [
-    ("sample_image_1.pdf", "A fun team photo with boba", 1, 1),
-    ("sample_image_2.pdf", "Team meeting at dorm", 2, 2),
-    ("sample_image_3.pdf", "Team in front of the local landmark", 3, 1),
-    ("sample_image_4.pdf", "Team mimicking an animal", 4, 2),
-    ("sample_image_5.pdf", "Team jump shot at outdoor park", 5, 3),
+    ("sample_image_1.jpg", "A fun team photo with boba", 1),
+    ("sample_image_2.jpg", "Team meeting at dorm", 2),
+    ("sample_image_3.jpg", "Team in front of the local landmark", 1),
+    ("sample_image_4.jpg", "Team mimicking an animal", 2),
+    ("sample_image_5.jpg", "Team jump shot at outdoor park", 3),
+
 ]
 
 # Optional: Clear existing photos for a clean insert

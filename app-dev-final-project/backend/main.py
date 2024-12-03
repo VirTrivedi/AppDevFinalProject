@@ -645,3 +645,28 @@ def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_
         Images=user.Images or [],
         Role=user.Role
     )
+
+@app.get("/mentees/team/{team_id}", response_model=List[UserOut])
+def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)):
+    # Query for mentees with the specified TeamID
+    mentees_query = select(User).where(User.Role == RoleEnum.mentee, User.TeamID == team_id)
+    mentees = session.exec(mentees_query).scalars().all()
+
+    # Check if no mentees are found
+    if not mentees:
+        raise HTTPException(status_code=404, detail=f"No mentees found for TeamID {team_id}")
+
+    # Convert ORM objects to Pydantic models for the response
+    mentees_out = [
+        UserOut(
+            ID=mentee.ID,
+            Name=mentee.Name,
+            Email=mentee.Email,
+            Points=mentee.Points,
+            Mentors=mentee.Mentors or [],
+            Images=mentee.Images or [],
+            Role=mentee.Role,
+        )
+        for mentee in mentees
+    ]
+    return mentees_out

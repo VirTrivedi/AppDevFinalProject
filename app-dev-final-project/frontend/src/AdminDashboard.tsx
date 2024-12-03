@@ -10,7 +10,7 @@ const AdminDashboard: React.FC = () => {
     <div style={styles.dashboardContainer}>
       <h1>Dashboard</h1>
       <div style={styles.section}>
-        <h2>Welcome back, Kimber!</h2>
+        <h2>Welcome back!</h2>
       </div>
 
       <div style={styles.section}>

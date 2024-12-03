@@ -1,36 +1,94 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAppContext } from './AppContext';
+import axios from 'axios';
+
+// Interface for Mentee or User
+interface Mentee {
+  ID: number;
+  Name: string;
+  Email: string;
+  Points: number;
+  Mentors: string[];
+  Images: string[];
+  Role: string; // "mentee" or "mentor"
+}
+
+// Interface for Challenge
+interface Challenge {
+  ID: number;
+  Description: string;
+  StartDate: string;
+  EndDate: string;
+  PointsValue: number;
+}
 
 const Dashboard: React.FC = () => {
-  const { person, mentees, mentors, fetchMentees, fetchMentorsForMentee, getCurrentChallenge, fetchChallenges, setLoginStatus } = useAppContext();
   const navigate = useNavigate();
 
-  const [sortedTeammates, setSortedTeammates] = useState(mentees);
-  const [sortedMentors, setSortedMentors] = useState(mentors);
+  const [mentees, setMentees] = useState<Mentee[]>([]);
+  const [mentors, setMentors] = useState<string[]>([]);
+  const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null);
+  const [person, setPerson] = useState<Mentee | null>(null);
+  const API_BASE_URL = 'http://127.0.0.1:8000';
 
-  // Fetch mentees and mentors on mount
+  // Fetch all mentees
+  const fetchMentees = async () => {
+    try {
+      const response = await axios.get<Mentee[]>(`${API_BASE_URL}/mentees`);
+      setMentees(response.data);
+    } catch (error) {
+      console.error('Error fetching mentees:', error);
+    }
+  };  
+
+  // Fetch mentors for the logged-in user
+  const fetchMentorsForMentee = async () => {
+    if (!person?.ID) return;
+    try {
+      const response = await axios.get<Mentee>(`${API_BASE_URL}/mentees/${person.ID}`);
+      setMentors(response.data.Mentors || []);
+    } catch (error) {
+      console.error('Error fetching mentors:', error);
+    }
+  };
+
+  // Fetch current challenges (replace with backend challenge endpoint)
+  const fetchChallenges = async () => {
+    try {
+      const response = await axios.get<Challenge[]>(`${API_BASE_URL}/challenges`);
+      const today = new Date();
+      const activeChallenge = response.data.find(
+        (challenge) =>
+          new Date(challenge.StartDate) <= today && new Date(challenge.EndDate) >= today
+      );
+      setCurrentChallenge(activeChallenge || null);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+    }
+  };  
+
+  // On component mount, fetch data
   useEffect(() => {
     fetchMentees();
-    fetchMentorsForMentee();
     fetchChallenges();
-  }, [fetchMentees, fetchMentorsForMentee, fetchChallenges]);
-
-  const currentChallenge = getCurrentChallenge();
-
-  // Sort teammates and mentors whenever they are updated
-  useEffect(() => {
-    setSortedTeammates([...mentees].sort((a, b) => a.name.localeCompare(b.name)));
-  }, [mentees]);
+  }, []);
 
   useEffect(() => {
-    setSortedMentors([...mentors].sort((a, b) => a.localeCompare(b)));
-  }, [mentors]);
+    if (person?.ID) {
+      fetchMentorsForMentee();
+    }
+  }, [person]);
+
+  // Sort teammates and mentors
+  const sortedTeammates = [...mentees].sort((a, b) => 
+    a.Name.localeCompare(b.Name)
+  );
+
+  const sortedMentors = [...mentors].sort((a, b) => a.localeCompare(b));
 
   const handleLogout = () => {
     const confirmLogout = window.confirm('Are you sure you want to log out?');
     if (confirmLogout) {
-      setLoginStatus(false);
       navigate('/login'); // Redirect to login page
     }
   };
@@ -39,16 +97,16 @@ const Dashboard: React.FC = () => {
     <div style={styles.dashboardContainer}>
       <h1>Dashboard</h1>
       <div style={styles.section}>
-        <h2>Name: {person?.name || 'Unknown'}</h2>
-        <p>Score: {person?.points || 0}</p>
+        <h2>Name: {person?.Name || 'Unknown'}</h2>
+        <p>Score: {person?.Points || 0}</p>
       </div>
 
       <div style={styles.section}>
         <h3>Teammates and Scores:</h3>
         <ul>
-          {sortedTeammates.map((teammate) => (
+        {sortedTeammates.map((teammate) => (
             <li key={teammate.ID}>
-              {teammate.name} - {teammate.points} points
+              {teammate.Name} - {teammate.Points} points
             </li>
           ))}
         </ul>
@@ -72,7 +130,8 @@ const Dashboard: React.FC = () => {
               Earn {currentChallenge.PointsValue} points!
             </p>
             <p style={styles.challengeDates}>
-              Valid from {new Date(currentChallenge.StartDate).toLocaleDateString()} to{" "}
+              Valid from{' '}
+              {new Date(currentChallenge.StartDate).toLocaleDateString()} to{' '}
               {new Date(currentChallenge.EndDate).toLocaleDateString()}
             </p>
           </>

@@ -100,7 +100,7 @@ const PhotoUpload: React.FC = () => {
           Upload Photo
         </button>
       </div>
-      <Link to="/" style={styles.link}>
+      <Link to="/dashboard" style={styles.link}>
         Back to Dashboard
       </Link>
     </div>

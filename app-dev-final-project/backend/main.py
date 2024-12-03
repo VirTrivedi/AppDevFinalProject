@@ -437,27 +437,6 @@ async def get_attendance_data(week: int):
     return {"week": week, "attendance_data": data}
 
 
-# Example route: Get all challenges
-# @app.get("/challenges", response_model=List[ChallengeOut])
-# def get_challenges(session: Session = Depends(get_session)):
-#     challenges = session.exec(select(Challenge)).scalars().all()
-
-#     if not challenges:
-#         raise HTTPException(status_code=404, detail="No challenges found")
-    
-#     challenges_out = [
-#         ChallengeOut(
-#             ID=challenge.ID,
-#             Description=challenge.Description,
-#             StartDate=challenge.StartDate,
-#             EndDate=challenge.EndDate,
-#             PointsValue=challenge.PointsValue,
-#             Photos=[photo.FileData for photo in challenge.Photos],
-#         )
-#         for challenge in challenges
-#     ]
-    
-#     return challenges_out
 
 @app.get("/challenges", response_model=List[ChallengeOut])
 def get_challenges(session: Session = Depends(get_session)):
@@ -692,7 +671,24 @@ def deny_photo(photo_id: int, session: SessionDep):
     return {"message": f"Photo ID {photo_id} has been denied", "photo": photo}
 
 
+@app.put("/photos/{photo_id}/pending")
+def deny_photo(photo_id: int, session: SessionDep):
+    # Retrieve the photo by ID
+    photo = session.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Check if the photo status is 'pending'
+    if photo.Status == PhotoStatus.pending:
+        raise HTTPException(status_code=400, detail="Only dnied/apprvoved photos can be pended")
+    
+    # Update the status to 'denied'
+    photo.Status = PhotoStatus.pending
+    session.add(photo)
+    session.commit()
+    session.refresh(photo)
 
+    return {"message": f"Photo ID {photo_id} has been rest to pending", "photo": photo}
 
 
 @app.put("/users/team/{team_id}/increase_points")

@@ -65,7 +65,7 @@ const PhotoUpload: React.FC = () => {
 
   return (
     <div style={styles.container}>
-      <h1>Photo Upload</h1>
+      <h1 style={styles.header}>Photo Upload</h1>
       <div style={styles.uploadSection}>
         <input
           type="file"
@@ -109,12 +109,23 @@ const PhotoUpload: React.FC = () => {
 
 export default PhotoUpload;
 
-const styles = {
+const styles: {
+  [key: string]: React.CSSProperties;
+} = {
   container: {
     padding: '20px',
     maxWidth: '400px',
     margin: '50px auto',
     fontFamily: 'Arial, sans-serif',
+    display: "flex",
+    position: "absolute",
+    alignItems: "center",
+   
+  },
+  header: {
+    fontSize: "2rem",
+    color: "#333",
+    marginBottom: "20px",
   },
   uploadSection: {
     marginBottom: '20px',

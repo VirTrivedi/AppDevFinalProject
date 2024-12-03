@@ -52,6 +52,7 @@ const Login: React.FC = () => {
 
   return (
     <div style={styles.page}>
+      <div style={styles.container0}>
       <div style={styles.container}>
         <h1 style={styles.title}>⭐ Login ⭐</h1>
         <div style={styles.formGroup}>
@@ -85,6 +86,7 @@ const Login: React.FC = () => {
         </p>
       </div>
     </div>
+    </div>
   );
 };
 
@@ -109,9 +111,24 @@ const styles: {
     justifyContent: 'center',
     width: '100%',
     height: '100%',
-    maxHeight: '580px',
+    maxHeight: '560px',
     alignItems: 'center',
-    maxWidth: '800px',
+    maxWidth: '780px',
+    padding: '40px',
+    borderRadius: '20px',
+    background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',
+    // boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
+    border: "solid 10px"
+  },
+  container0: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    maxHeight: '600px',
+    alignItems: 'center',
+    maxWidth: '820px',
     padding: '40px',
     borderRadius: '20px',
     background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',

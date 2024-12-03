@@ -163,6 +163,7 @@ const styles: {
         flexDirection: "column",
         alignItems: "center",
         textAlign: "center",
+        
      },
     icon: {
         marginRight: "10px",

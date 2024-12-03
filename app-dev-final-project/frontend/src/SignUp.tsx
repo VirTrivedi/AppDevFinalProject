@@ -39,6 +39,7 @@ const SignUp: React.FC = () => {
 
   return (
     <div style={styles.page}>
+      <div style={styles.container0}>
       <div style={styles.container}>
         <h1 style={styles.title}>⭐ Sign Up ⭐</h1>
         {error && <p style={styles.errorText}>{error}</p>}
@@ -81,6 +82,7 @@ const SignUp: React.FC = () => {
         </p>
       </div>
     </div>
+    </div>
   );
 };
 
@@ -98,27 +100,42 @@ const styles: {
     fontFamily: "'Gill Sans', sans-serif",
     width: '100vw',
     background: 'radial-gradient( #002066, #3A1258)',
-    boxSizing: 'border-box',
+  },
+  container0: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    maxHeight: '600px',
+    alignItems: 'center',
+    maxWidth: '820px',
+    padding: '40px',
+    borderRadius: '20px',
+    background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',
+    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
   },
   container: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     width: '100%',
-    height: '90%',
-    maxHeight: '6000px',
+    height: '100%',
+    maxHeight: '560px',
     alignItems: 'center',
-    maxWidth: '800px',
+    maxWidth: '780px',
     padding: '40px',
     borderRadius: '20px',
     background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',
-    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
+    // boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
+    border: "solid 10px"
   },
   title: {
-    fontSize: '4rem',
-    marginBottom: '30px',
+    fontSize: '3rem',
+    marginBottom: '3px',
     fontWeight: 'bold',
     color: '#3A1258',
+    marginTop: '4%',
   },
   formGroup: {
     marginBottom: '50px',

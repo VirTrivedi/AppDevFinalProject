@@ -65,15 +65,7 @@ const SignUp: React.FC = () => {
 export default SignUp;
 
 const styles: {
-  page: React.CSSProperties;
-  container: React.CSSProperties;
-  title: React.CSSProperties;
-  formGroup: React.CSSProperties;
-  label: React.CSSProperties;
-  input: React.CSSProperties;
-  button: React.CSSProperties;
-  linkText: React.CSSProperties;
-  link: React.CSSProperties;
+[key: string]: React.CSSProperties; 
 } = {
   page: {
     display: 'flex',
@@ -81,21 +73,23 @@ const styles: {
     alignItems: 'center',
     height: '100vh',
     margin: '0',
-    fontFamily: "'Arial', sans-serif",
+    fontFamily: "'Gill Sans', sans-serif",
     width: '100vw',
+    background: 'radial-gradient( #002066, #3A1258)',
+    boxSizing: 'border-box',
   },
   container: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     width: '100%',
-    height: '100%',
+    height: '90%',
     maxHeight: '6000px',
     alignItems: 'center',
     maxWidth: '800px',
     padding: '40px',
     borderRadius: '20px',
-    background: 'linear-gradient(to bottom, #FFFBCC, #FFF3A0)',
+    background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',
     boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
   },
   title: {
@@ -115,10 +109,11 @@ const styles: {
     fontWeight: 'bold',
     marginBottom: '5px',
     display: 'block',
+    padding: '0.002px',
   },
   input: {
     width: '90%',
-    padding: '30px',
+    padding: '22px',
     borderRadius: '20px',
     border: '5px solid #FFA99F',
     backgroundColor: '#FFF4E6',

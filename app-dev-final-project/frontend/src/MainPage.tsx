@@ -46,14 +46,9 @@ export default Home;
 
 
 const styles: {
-  background: React.CSSProperties;
-  outerContainer: React.CSSProperties;
-  imageContainer: React.CSSProperties;
-  icon: React.CSSProperties;
-  screenOverlay: React.CSSProperties;
-  textContainer: React.CSSProperties;
-  button: React.CSSProperties;} = {
-  outerContainer: {
+  [key: string]: React.CSSProperties; 
+ } = {
+outerContainer: {
    height: '100vh',
    display: 'flex',
    flexDirection: 'column',
@@ -69,12 +64,13 @@ const styles: {
    height: 'auto',
  },
  icon: {
-   width: '100vw',
+   width: '70vw',
    maxWidth: '1800px', // Matches the width of the container
    height: 'auto',
    display: 'block',
    margin: '0 auto',
-   marginLeft: '75px',
+   marginLeft: '280px',
+   marginTop: '75px',
  },
  screenOverlay: {
    position: 'absolute',
@@ -90,22 +86,22 @@ const styles: {
    textAlign: 'center',
  },
  textContainer: {
-   marginTop: '220px', // Adjust to position text directly beneath the ADC logo
+   marginTop: '230px', // Adjust to position text directly beneath the ADC logo
    width: '100%', // Matches the width of the container
    display: 'flex',
    flexDirection: 'column',
    justifyContent: 'center',
-   gap: '0.2px',
-   marginRight: '70px',
+   gap: '0.1px',
+   marginRight: '50px',
  },
  button: {
    width: '234px', // Sets a consistent button width
-   height: '72px',
+   height: '55px',
    padding: '10px 10px',
    margin: '2px 0', // Spacing between buttons
    borderRadius: '8px',
    border: 'transparent', // Optional: for better visibility
-   fontSize: '3.1rem',
+   fontSize: '2.9rem',
    fontWeight: 'bold',
    cursor: 'pointer',
    transition: 'all 0.3s ease',

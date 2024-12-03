@@ -25,19 +25,22 @@ const App: React.FC = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route
           path="/dashboard"
-          element={isLoggedIn ? <Dashboard /> : <Navigate to="/" />}
+          element = {<Dashboard/>}
         />
         <Route
           path="/leaderboard"
-          element={isLoggedIn ? <Leaderboard /> : <Navigate to="/" />}
+          element = {<Leaderboard/>}
+          //  element={isLoggedIn ? <Leaderboard /> : <Navigate to="/" />}
         />
         <Route
           path="/photo-upload"
-          element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/" />}
+          element = {<PhotoUpload/>}
+          // element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/" />}
         />
         <Route
           path="/photos"
-          element={isLoggedIn ? <Photos /> : <Navigate to="/" />}
+          element = {<Photos/>}
+          // element={isLoggedIn ? <Photos /> : <Navigate to="/" />}
         />
         <Route
           path="/admin"

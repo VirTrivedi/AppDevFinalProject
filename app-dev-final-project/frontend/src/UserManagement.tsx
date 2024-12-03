@@ -122,6 +122,22 @@ const UserManagement = () => {
             }
         }
     };
+     // Handle deleting all mentees
+     const handleDeleteAllMentees = async () => {
+        setMessage(""); // Clear previous messages
+
+        try {
+            const response = await axios.post("http://localhost:8000/mentees/delete/all", menteeData);
+            setMessage(response.data.message); // Display success message from the server
+        } catch (error: any) {
+            if (error.response) {
+                // Backend error response
+                setMessage(`Error: ${error.response.data.detail || error.message}`);
+            } else {
+                setMessage(`Error: ${error.message}`);
+            }
+        }
+    };
 
     return (
         <div>
@@ -162,7 +178,10 @@ const UserManagement = () => {
                 </div>
                 <button type="submit">Add Mentee</button>
             </form>
-
+            {/* Button to Delete All Mentees */}
+            <button onClick={handleDeleteAllMentees}>
+                Remove All Mentees
+            </button>
             {/* Display messages */}
             {message && <p>{message}</p>}
         </div>

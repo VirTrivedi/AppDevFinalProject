@@ -46,6 +46,7 @@ class User(SQLModel, table=True):
     Mentors: List[str] = Field(sa_column=Column(JSON))  # Optional JSON for mentor mapping
     Images: List[str] = Field(sa_column=Column(JSON))  # Optional JSON for uploaded images
     Role: RoleEnum = Field(default=RoleEnum.mentee)  # Stored as strings in SQLite
+    TeamID: int = Field(default=None)
 
     # Relationships
     Photos: List["Photo"] = Relationship(back_populates="Users")

@@ -12,11 +12,8 @@ import Photos from './Photos';
 import MainPage from './MainPage';
 import Login from './Login';
 import SignUp from './SignUp';
-import { useAppContext } from './AppContext';
 
 const App: React.FC = () => {
-
-  const { isLoggedIn } = useAppContext();
   return (
     <Router>
       <Routes>
@@ -25,30 +22,39 @@ const App: React.FC = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route
           path="/dashboard"
-          element = {<Dashboard/>}
+          // element={isLoggedIn ? <Dashboard /> : <Navigate to="/" />}
+          element={<Dashboard />}
         />
         <Route
           path="/leaderboard"
-          element = {<Leaderboard/>}
-          //  element={isLoggedIn ? <Leaderboard /> : <Navigate to="/" />}
+          // element={isLoggedIn ? <Leaderboard /> : <Navigate to="/" />}
+          element={<Leaderboard />}
         />
         <Route
           path="/photo-upload"
-          element = {<PhotoUpload/>}
           // element={isLoggedIn ? <PhotoUpload /> : <Navigate to="/" />}
+          element={<PhotoUpload />}
         />
         <Route
           path="/photos"
-          element = {<Photos/>}
           // element={isLoggedIn ? <Photos /> : <Navigate to="/" />}
+          element={<Photos />}
         />
         <Route
           path="/admin"
           element={<AdminDashboard />}
         />
-        <Route
+         <Route
+          path="/media"
+          element={<MediaReview />}
+        />
+        <Route 
           path="/attendance"
           element={<Attendance />}
+        />
+         <Route
+          path="/management"
+          element={<UserManagement />}
         />
       </Routes>
     </Router>

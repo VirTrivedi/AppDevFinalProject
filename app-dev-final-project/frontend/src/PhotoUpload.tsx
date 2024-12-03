@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useAppContext } from './AppContext';
 import { Link } from 'react-router-dom';
 
 const PhotoUpload: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
+  const [challengeId, setChallengeId] = useState('');
+  const [teamId, setTeamId] = useState('');
   const [error, setError] = useState('');
-  const { addPhoto } = useAppContext();
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -20,7 +21,7 @@ const PhotoUpload: React.FC = () => {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!selectedFile) {
       setError('Please select a photo to upload.');
       return;
@@ -29,11 +30,37 @@ const PhotoUpload: React.FC = () => {
       setError('Please add a caption for your photo.');
       return;
     }
+    if (!challengeId.trim() || !teamId.trim()) {
+      setError('Please provide a valid Challenge ID and Team ID.');
+      return;
+    }
 
-    addPhoto(selectedFile, caption);
-    setSelectedFile(null);
-    setCaption('');
-    alert('Photo and caption uploaded successfully!');
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('caption', caption);
+    formData.append('challenge_id', challengeId);
+    formData.append('team_id', teamId);
+
+    try {
+      const response = await fetch('/photos/new', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to upload photo');
+      }
+
+      const data = await response.json();
+      setSuccessMessage(data.message || 'Photo uploaded successfully!');
+      setSelectedFile(null);
+      setCaption('');
+      setChallengeId('');
+      setTeamId('');
+    } catch (error: any) {
+      setError(error.message);
+    }
   };
 
   return (
@@ -53,12 +80,27 @@ const PhotoUpload: React.FC = () => {
           placeholder="Enter a caption for your photo"
           style={styles.captionInput}
         />
+        <input
+          type="number"
+          value={challengeId}
+          onChange={(e) => setChallengeId(e.target.value)}
+          placeholder="Challenge ID"
+          style={styles.input}
+        />
+        <input
+          type="number"
+          value={teamId}
+          onChange={(e) => setTeamId(e.target.value)}
+          placeholder="Team ID"
+          style={styles.input}
+        />
         {error && <p style={styles.errorText}>{error}</p>}
+        {successMessage && <p style={styles.successText}>{successMessage}</p>}
         <button onClick={handleUpload} style={styles.uploadButton}>
           Upload Photo
         </button>
       </div>
-      <Link to="/" style={styles.link}>
+      <Link to="/dashboard" style={styles.link}>
         Back to Dashboard
       </Link>
     </div>
@@ -106,5 +148,12 @@ const styles = {
     marginTop: '20px',
     textDecoration: 'none',
     color: '#007BFF',
+  },
+  input: {
+    padding: '10px',
+    fontSize: '16px',
+  },
+  successText: {
+    color: 'green',
   },
 };

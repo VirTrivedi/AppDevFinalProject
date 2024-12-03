@@ -1,115 +1,100 @@
-import React, { useState } from 'react';
-
+import React, { useEffect, useState } from "react";
 
 type Photo = {
   id: number;
   url: string;
   caption: string;
-  status: 'pending' | 'approved' | 'rejected'; 
+  status: "pending" | "approved" | "rejected";
 };
 
 type PhotoItemProps = {
-  key: number;
   photo: Photo;
-
 };
 
-const PhotoItem = ({ photo }: PhotoItemProps) => {
+interface Challenge {
+  ID: number;
+  Description: string;
+  StartDate: string;
+  EndDate: string;
+  PointsValue: number;
+  photos: Photo[]; // Added photos array to match your data
+}
 
-  let [rejectStatus, setRejectStatus] = useState(false);
-  let [approveStatus, setApproveStatus] = useState(false);
+const PhotoItem: React.FC<PhotoItemProps> = ({ photo }) => {
+  const [status, setStatus] = useState(photo.status);
 
+  const handleApprove = () => setStatus("approved");
+  const handleReject = () => setStatus("rejected");
+  const handleReset = () => setStatus("pending");
 
-  function handleApprove() {
-        setRejectStatus(false);
-        setApproveStatus(true);
-        photo.status = 'approved';
+  return (
+    <div className="photo-item">
+      <img src={`/images/${photo.url}`} alt={photo.caption} className="photo" />
+      <div className="caption">{photo.caption}</div>
+      <div className="controls">
+        {status === "pending" && (
+          <>
+            <button onClick={handleApprove} className="approve-btn">Approve</button>
+            <button onClick={handleReject} className="reject-btn">Reject</button>
+          </>
+        )}
+        {status !== "pending" && (
+          <button onClick={handleReset} className="reset-btn">Change this</button>
+        )}
+        <h3>{status === "approved" ? "Approved!" : status === "rejected" ? "Rejected" : null}</h3>
+      </div>
+    </div>
+  );
+};
+
+const MediaReviewPage: React.FC = () => {
+  const { fetchChallenges } = useAppContext();
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [openChallenge, setOpenChallenge] = useState<number | null>(null); // Changed to number for ID comparison
+
+  useEffect(() => {
+    const loadChallenges = async () => {
+      const fetchedChallenges = await fetchChallenges();
+      if (Array.isArray(fetchedChallenges)) {
+        setChallenges(fetchedChallenges);
+      } else {
+        console.error("Fetched data is not an array", fetchedChallenges);
+      }
     };
+    loadChallenges();
+  }, [fetchChallenges]);
 
-  function handleReject() {
-    setRejectStatus(true);
-    setApproveStatus(false);
-    photo.status = 'rejected';
-    };
-  
-  function handleReset() {
-    setRejectStatus(false);
-    setApproveStatus(false);
-    photo.status = 'pending';
+  const toggleDropdown = (challengeID: number) => {
+    setOpenChallenge(openChallenge === challengeID ? null : challengeID);
   };
 
-
-
-    return (
-      <div className="photo-item">
-        <img src={`../public/images/${photo.url}`} alt={photo.caption} className="photo" />
-        <div className="caption">{photo.caption}</div>
-        <div className="controls">
-
-          {(!rejectStatus && !approveStatus) && (<button onClick={handleApprove} className="approve-btn">Approve</button>)}
-          {(!rejectStatus && !approveStatus) && (<button onClick={handleReject} className="reject-btn">Reject</button>)}
-          {(!rejectStatus && approveStatus) && (<h3>Approved!</h3>)}
-          {(rejectStatus && !approveStatus) && (<h3>Rejected</h3>)}
-          {(!rejectStatus && approveStatus || rejectStatus && !approveStatus) && (<button onClick={handleReset} className="reset-btn">Change this</button>)}
-
-        </div>
-      </div>
-    );};
-
-type Challenge = {
-  name: string;
-  photos: Photo[];
-};
-
-type MediaReviewPageProps = {
-  challenges: Challenge[];
-};
-
-
-const MediaReviewPage = ({ challenges }: MediaReviewPageProps) => {
-
-  const [openChallenge, setOpenChallenge] = useState<string | null>(null);
-
-  challenges = [{name: "Week 01: Halloween", photos: [{id: 1, url: 'download.jpeg', caption: "look at this tree", status: "pending"}, {id: 2, url: 'download.jpeg', caption: "look at this tree", status: "pending"}]},
-  {name: "Week 02: Dorm", photos: [{id: 2, url: 'download.jpeg', caption: "look at this dorm", status: "pending"}]}
-  ];
-  
-const toggleDropdown = (challengeName: string) => {
-  setOpenChallenge(openChallenge === challengeName ? null : challengeName);
-};
-
-return (
-  <div className="media-review-page">
-    <h1>Review Challenge Photos</h1>
-
-    {challenges.map((challenge) => (
-      <div key={challenge.name} className="challenge">
-        <button
-          onClick={() => toggleDropdown(challenge.name)}
-          className="challenge-dropdown-button"
-        >
-          {challenge.name}
-        </button>
-
-        {openChallenge === challenge.name && (
-          <div className="dropdown-window-overlay">
-            <div className="dropdown-window">
-              <h2>{challenge.name} Photos</h2>
-              <div className="photo-list">
-                {challenge.photos.map((photo) => (
-                  <PhotoItem
-                    key={photo.id}
-                    photo={photo}
-                  />
-                ))}
+  return (
+    <div className="media-review-page">
+      <h1>Review Challenge Photos</h1>
+      {challenges.map((challenge) => (
+        <div key={challenge.ID} className="challenge">
+          <button
+            onClick={() => toggleDropdown(challenge.ID)} // Use ID for toggling
+            className="challenge-dropdown-button"
+          >
+            {challenge.Description} {/* Updated to match your data */}
+          </button>
+          {openChallenge === challenge.ID && (
+            <div className="dropdown-window-overlay">
+              <div className="dropdown-window">
+                <h2>{challenge.Description} Photos</h2>
+                <div className="photo-list">
+                  {challenge.photos.map((photo) => (
+                    <PhotoItem key={photo.id} photo={photo} />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    ))}
-  </div>
-);
+          )}
+        </div>
+      ))}
+    </div>
+  );
 };
 
 export default MediaReviewPage;

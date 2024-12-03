@@ -1,40 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import { useAppContext } from './AppContext';
 import { Link } from 'react-router-dom';
-// import "./Leaderboard.css";
+import axios from 'axios';
+import "./Leaderboard.css";
 
-// const Leaderboard: React.FC = () => {
-//     const { person, mentees, fetchMentees } = useAppContext();
-
-//     // Combine person and mentees, and sort by score
-//     const allParticipants = person
-//         ? [{ ...person }, ...mentees.filter((mentee) => mentee.ID !== person.ID)].sort(
-//               (a, b) => b.points - a.points
-//           )
-//         : mentees.sort((a, b) => b.points - a.points);
-
-//     useEffect(() => {
-//         // Fetch mentees on component mount
-//         fetchMentees();
-//     }, [fetchMentees]);
+interface Participant {
+    ID: number;
+    Name: string;
+    Points: number;
+  }
 
 const Leaderboard: React.FC = () => {
-    const { person, mentees, fetchMentees } = useAppContext();
-    const [hoveredLink, setHoveredLink] = useState<string | null>(null);
-  
-    const allParticipants = person
-      ? [{ ...person }, ...mentees.filter((mentee) => mentee.ID !== person.ID)].sort(
-          (a, b) => b.points - a.points
-        )
-      : mentees.sort((a, b) => b.points - a.points);
-  
-    useEffect(() => {
-      fetchMentees();
-    }, [fetchMentees]);
+    const [mentees, setMentees] = useState<Participant[]>([]);
+    const [person, setPerson] = useState<Participant | null>(null); // Replace with actual logged-in user data
+    const API_BASE_URL = 'http://127.0.0.1:8000';
 
-    const handleMouseEnter = (link: string) => setHoveredLink(link);
-    const handleMouseLeave = () => setHoveredLink(null);
-  
+
+    // Fetch mentees from the backend
+    const fetchMentees = async () => {
+        try {
+            const response = await axios.get<Participant[]>(`${API_BASE_URL}/mentees`);
+            setMentees(response.data);
+        } catch (error) {
+            console.error('Error fetching mentees:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchMentees();
+    }, []);
+
+    // Combine the logged-in user (person) and mentees, sort by score
+    const allParticipants = person
+        ? [{ ...person }, ...mentees.filter((mentee) => mentee.ID !== person.ID)].sort(
+            (a, b) => b.Points - a.Points
+        )
+    : mentees.sort((a, b) => b.Points - a.Points);
+
     return (
       <div style={styles.leaderboardContainer}>
          <div style={styles.header}>

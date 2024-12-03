@@ -1,16 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAppContext } from './AppContext';
+// import { useAppContext } from './AppContext';
 
 const AdminDashboard: React.FC = () => {
-  const { person, teammates, mentors } = useAppContext();
-  person.name = "Kimber"; // remove this 
+  // const { person, teammates, mentors } = useAppContext();
+ 
   
   return (
     <div style={styles.dashboardContainer}>
       <h1>Dashboard</h1>
       <div style={styles.section}>
-        <h2>Welcome back, {person.name}!</h2>
+        <h2>Welcome back, Kimber!</h2>
       </div>
 
       <div style={styles.section}>
@@ -18,7 +18,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div style={styles.section}>
-        <Link to="/review">You have 12 photos pending review</Link>
+        <Link to="/media">You have 12 photos pending review</Link>
       </div>
 
       <div style={styles.section}>

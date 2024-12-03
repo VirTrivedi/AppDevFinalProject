@@ -97,6 +97,9 @@ const UserManagement = () => {
     // State to manage success and error messages
     const [message, setMessage] = useState("");
 
+    // State for deleting a mentee by name
+    const [menteeToDelete, setMenteeToDelete] = useState("");
+
     // Handle input changes for mentee name (input fields)
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -134,11 +137,30 @@ const UserManagement = () => {
         setMessage(""); // Clear previous messages
 
         try {
-            const response = await axios.post("http://localhost:8000/mentees/delete/all", menteeData);
+            const response = await axios.post("http://localhost:8000/mentees/delete-all", menteeData);
             setMessage(response.data.message); // Display success message from the server
         } catch (error: any) {
             if (error.response) {
                 // Backend error response
+                setMessage(`Error: ${error.response.data.detail || error.message}`);
+            } else {
+                setMessage(`Error: ${error.message}`);
+            }
+        }
+    };
+
+    // Handle deleting a single mentee by name
+    const handleDeleteMenteeByName = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setMessage(""); // Clear previous messages
+
+        try {
+            const response = await axios.delete(
+                `http://localhost:8000/mentees/by-name/${menteeToDelete}`
+            );
+            setMessage(response.data.message); // Display success message from the server
+        } catch (error: any) {
+            if (error.response) {
                 setMessage(`Error: ${error.response.data.detail || error.message}`);
             } else {
                 setMessage(`Error: ${error.message}`);
@@ -182,6 +204,21 @@ const UserManagement = () => {
             <button onClick={handleDeleteAllMentees}>
                 Remove All Mentees
             </button>
+
+            <h2>Delete Mentee by Name</h2>
+            <form onSubmit={handleDeleteMenteeByName}>
+                <div>
+                    <label>Name of Mentee:</label>
+                    <input
+                        type="text"
+                        value={menteeToDelete}
+                        onChange={(e) => setMenteeToDelete(e.target.value)}
+                        placeholder="Enter mentee's name"
+                        required
+                    />
+                </div>
+                <button type="submit">Delete Mentee</button>
+            </form>
             {/* Display messages */}
             {message && <p>{message}</p>}
         </div>

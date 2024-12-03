@@ -40,6 +40,10 @@ class RoleEnum(PyEnum):
     mentee = "mentee"
     admin = "admin"
 
+class UpdateMentorsRequest(BaseModel):
+    name: str
+    mentors: List[str]
+
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
 
@@ -330,6 +334,36 @@ def get_users_by_team(team_id: int, session: Session = Depends(get_session)):
         )
         for mentee in mentees
     ]
+
+@app.post("/mentees/assign_mentors")
+def update_mentors(data: UpdateMentorsRequest, session: Session = Depends(get_session)):
+    """
+    Update the list of mentors for a specific mentee.
+    """
+    try:
+        # Fetch the user by name
+        user = session.exec(select(User).where(User.Name == data.name)).first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if user.Role != RoleEnum.mentee:
+            raise HTTPException(status_code=400, detail="The user is not a mentee")
+
+        # Update the Mentors field
+        user.Mentors = data.mentors
+
+        # Commit and refresh the session
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
+        return {"message": "Mentors updated successfully", "user": UserOut.from_orm(user)}
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while updating mentors")
+
 
 @app.delete("/mentees/{mentee_id}", response_model=dict)
 def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):
@@ -835,7 +869,7 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
     return mentees_out
 
 
-@app.delete("/mentees/delete/all", response_model=dict)
+@app.delete("/mentees/delete-all", response_model=dict)
 def delete_all_mentees(session: Session = Depends(get_session)):
    try:
         # Query all users with the role of 'mentee'

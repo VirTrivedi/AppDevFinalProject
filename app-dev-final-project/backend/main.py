@@ -2,7 +2,7 @@ import base64
 from typing import Annotated, List, Optional
 from fastapi import FastAPI, Depends, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, ForeignKey, Enum, Column
+from sqlalchemy import select, ForeignKey, Enum, Column, SQLAlchemyError
 from sqlmodel import Session, SQLModel, create_engine, JSON, Field, Relationship, Column
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
@@ -16,6 +16,8 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import asyncio 
+
+
 
 load_dotenv()
 
@@ -824,3 +826,26 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
         for mentee in mentees
     ]
     return mentees_out
+
+
+@app.delete("/mentees", response_model=dict)
+def delete_all_mentees(session: Session = Depends(get_session)):
+   try:
+        # Query all users with the role of 'mentee'
+        mentees = session.query(User).filter(User.Role == RoleEnum.mentee).all()
+
+        # If no mentees are found, raise an exception
+        if not mentees:
+            raise HTTPException(status_code=404, detail="No mentees found")
+
+        # Delete all mentees
+        for mentee in mentees:
+            session.delete(mentee)
+
+        session.commit()
+        return {"message": f"All mentees deleted successfully."}
+   
+   except SQLAlchemyError as e:
+        # Rollback in case of any error
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error deleting mentees: {str(e)}")

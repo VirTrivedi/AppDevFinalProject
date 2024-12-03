@@ -148,27 +148,30 @@ export default Leaderboard;
 const styles: {
   [key: string]: React.CSSProperties;
 } = {
-    background: {
-        width: "100%",
-        height: "100%",
-        zIndex: -1,
-    },
-    leaderboardContainer: {
-        width: "100vw",
-        minHeight: "100vh",
-        margin: 0,
-        padding: 0,
-        background: "transparent",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        textAlign: "center",
-        
-     },
     icon: {
         marginRight: "10px",
         width: "80px",
     },
+  background: {
+    width: "100%",
+    height: "100%",
+    zIndex: -1,
+    position: "fixed",
+    top: 0,
+    left: 0,
+  },
+  leaderboardContainer: {
+    width: "100vw",
+    minHeight: "100vh",
+    margin: 0,
+    padding: 0,
+    background: "transparent",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    position: "relative",
+  },
   navbar: {
     display: "flex",
     justifyContent: "space-around",
@@ -183,45 +186,41 @@ const styles: {
     borderBottomLeftRadius: "15px",
   },
   linkContainer: {
-      marginTop: "20px",
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      gap: "10px",
-    },
-    link: {
-      color: "black",
-      fontSize: "1.2rem",
-      textDecoration: "none",
-      // backgroundColor: "#FF6F61",
-      backgroundColor: "transparent",
-      padding: "10px 20px",
-      borderRadius: "9px",
-      // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-      // border: "solid 2px white",
-      transition: "transform 250ms",
-      fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif",
-    },
-    linkHover1: {
-      backgroundColor: "transparent",
-      transform: "scale(1.05)",
-      color: "#5EB6AD",
-    },
-    linkHover2: {
-      backgroundColor: "transparent",
-      transform: "scale(1.05)",
-      color: "#FEA85F",
-    },
-    linkHover3: {
-      backgroundColor: "transparent",
-      transform: "scale(1.05)",
-      color: "#FC7E80",
-    },
-      iconContainer: {
-      marginRight: "10px",
-      width: "85%",
-      },
-   
+    marginTop: "20px",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: "10px",
+  },
+  link: {
+    color: "black",
+    fontSize: "1.2rem",
+    textDecoration: "none",
+    backgroundColor: "transparent",
+    padding: "10px 20px",
+    borderRadius: "9px",
+    transition: "transform 250ms",
+    fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif",
+  },
+  linkHover1: {
+    backgroundColor: "transparent",
+    transform: "scale(1.05)",
+    color: "#5EB6AD",
+  },
+  linkHover2: {
+    backgroundColor: "transparent",
+    transform: "scale(1.05)",
+    color: "#FEA85F",
+  },
+  linkHover3: {
+    backgroundColor: "transparent",
+    transform: "scale(1.05)",
+    color: "#FC7E80",
+  },
+  iconContainer: {
+    marginRight: "10px",
+    width: "85%",
+  }, 
   iconImage: {
       alignItems: "center",
       display: "absolute",
@@ -234,6 +233,9 @@ const styles: {
     display: "flex",
     flexDirection: "column",
     gap: "10px",
+    position: "relative",
+    zIndex: 10,
+    marginTop: "200px",
   },
   leaderboardItem: {
     display: "flex",
@@ -242,6 +244,8 @@ const styles: {
     width: "100%",
     padding: "15px 20px",
     boxShadow: "8px 10px 15px -6px rgb(99, 61, 99)",
+    position: "relative",
+    zIndex: 20,
   },
   firstPlace: {
     backgroundColor: "#fffb9a", // Light yellow background
@@ -301,8 +305,9 @@ const styles: {
     borderRadius: "15px",
     boxShadow: "8px 10px 15px -6px rgb(99, 61, 99)",
     fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif",
-    position: "absolute",
-    top: "80%",
+    position: "relative",
+    zIndex: 5,
+    top: "auto",
   },
   infoBoxHeader: {
     fontSize: "24px",

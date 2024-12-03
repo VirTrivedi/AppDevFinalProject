@@ -188,7 +188,7 @@ const UserManagement: React.FC = () => {
         <h2 style={styles.subtitle}>Delete Mentee by Name</h2>
         <form onSubmit={handleDeleteMenteeByName} style={styles.form}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Mentee Name:</label>
+
             <input
               type="text"
               value={menteeToDelete}
@@ -218,7 +218,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: '0',
     fontFamily: "'Gill Sans', sans-serif",
     width: '100vw',
-    background: 'radial-gradient( #002066, #3A1258)',
   },
   container: {
     display: 'flex',
@@ -226,9 +225,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     width: '100%',
     height: '100%',
-    maxHeight: '580px',
+    maxHeight: '1000px',
     alignItems: 'center',
-    maxWidth: '800px',
+    maxWidth: '900px',
     padding: '40px',
     borderRadius: '20px',
     background: 'linear-gradient(to bottom, #ffe29f, #ffa99f)',
@@ -244,7 +243,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '2rem',
     color: '#3A1258',
     fontWeight: 'bold',
-    marginBottom: '20px',
+    marginBottom: '10px',
   },
   form: {
     width: '100%',

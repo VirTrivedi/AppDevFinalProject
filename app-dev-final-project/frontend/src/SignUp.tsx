@@ -1,44 +1,39 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from "axios";
+import axios from 'axios';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const API_BASE_URL = "http://127.0.0.1:8000";
 
   const handleSignUp = async () => {
-
     if (!name || !email || !password) {
-      setError("All fields are required.");
+      setError('All fields are required.');
       return;
     }
 
     try {
-      // Send user data to the backend
       const response = await axios.post(`${API_BASE_URL}/mentees/new`, {
-        name,
-        email,
-        password,
+        Name: name,
+        Email: email,
+        Password: password,
       });
 
       if (response.status === 200) {
         setSuccess(true);
-        setError("");
-        alert("Signup successful! Redirecting to login page...");
-        navigate("/login"); // Redirect to login page
+        setError('');
+        alert('Signup successful! Redirecting to login page...');
+        navigate('/login');
       }
-
-    } catch (err) {
-
-      console.error("Error during signup:", err);
-      setError("Signup failed. Please try again or use a different email.");
-      
+    } catch (err: any) {
+      console.error('Error during signup:', err.response?.data?.detail || err.message);
+      setError(err.response?.data?.detail || 'Signup failed. Please try again or use a different email.');
     }
   };
 

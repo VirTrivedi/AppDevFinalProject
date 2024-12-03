@@ -129,7 +129,6 @@ def get_session():
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
-
 # Initialize FastAPI app
 app = FastAPI()
 

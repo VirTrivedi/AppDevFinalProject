@@ -686,7 +686,7 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
             Points=mentee.Points,
             Mentors=mentee.Mentors or [],
             Images=mentee.Images or [],
-            Role=mentee.Role,
+            Role=mentee.Role
         )
         for mentee in mentees
     ]

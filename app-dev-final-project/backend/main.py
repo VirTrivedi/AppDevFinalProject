@@ -39,6 +39,10 @@ class AttendanceStatus(PyEnum):
 class RoleEnum(PyEnum):
     mentee = "mentee"
     admin = "admin"
+    
+class UpdateMentorsRequest(BaseModel):
+    name: str
+    mentors: List[str]
 
 # User (Mentee or Mentor) Model
 class User(SQLModel, table=True):
@@ -66,6 +70,7 @@ class UserOut(BaseModel):
     Mentors: Optional[List[str]] = None
     Images: Optional[List[str]] = None
     Role: RoleEnum
+    TeamID: int
 
     class Config:
         orm_mode = True  # This tells Pydantic to treat ORM models as dictionaries
@@ -216,6 +221,7 @@ def get_all_mentees(session: Session = Depends(get_session)):
             Mentors=mentee.Mentors or [],
             Images=mentee.Images or [],
             Role=mentee.Role,
+            TeamID=mentee.TeamID
         )
         for mentee in mentees
     ]
@@ -240,6 +246,7 @@ def get_mentee_by_id(mentee_id: int, session: Session = Depends(get_session)):
         Mentors=mentee.Mentors or [],
         Images=mentee.Images or [],
         Role=mentee.Role,
+        TeamID=mentee.TeamID
 
     )
     return mentee_out
@@ -259,6 +266,7 @@ def create_mentee(mentee_data: dict, session: Session = Depends(get_session)):
     existing_user = session.exec(select(User).where(User.Email == email)).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
 
     # Create the new mentee user
     new_user = User(
@@ -283,6 +291,41 @@ def create_mentee(mentee_data: dict, session: Session = Depends(get_session)):
         "user_id": new_user.ID
     }
 
+
+@app.post("/mentees/assign_mentors")
+def assign_mentors(mentee_data: dict, session: Session = Depends(get_session)):
+    print(f"Received data: {mentee_data}")
+    
+    try:
+        name = mentee_data.get("name")  # Get name of the mentee
+        mentors = mentee_data.get("mentors")  # Get the list of mentors
+        
+        # Fetch the existing user by name
+        existing_user = session.exec(select(User).where(User.Name == name)).first()
+
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Optional: If you want to ensure the user is a mentee, uncomment this
+        # if existing_user.Role != RoleEnum.mentee:
+        #     raise HTTPException(status_code=400, detail="The user is not a mentee")
+
+        # Update the Mentors field for the existing user
+        existing_user.Mentors = mentors
+
+        # Commit the changes to the session
+        session.add(existing_user)  # Ensure you add the updated user to the session
+        session.commit()
+        session.refresh(existing_user)  # Refresh to get the updated state
+
+        # Log the updated mentors data for verification
+        print(f"Updated mentors for {existing_user.Name}: {existing_user.Mentors}")
+
+        return {"message": "Mentors updated successfully", "user": UserOut.from_orm(existing_user)}
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while updating mentors")
 
 
 @app.get("/users/{user_id}", response_model=UserOut)
@@ -322,10 +365,42 @@ def get_users_by_team(team_id: int, session: Session = Depends(get_session)):
             Points=mentee.Points,
             Mentors=mentee.Mentors or [],
             Images=mentee.Images or [],
-            Role=mentee.Role,
+            Role=mentee.Role,            
+            TeamID=mentee.TeamID
+
         )
         for mentee in mentees
     ]
+
+@app.post("/mentees/assign_mentors")
+def update_mentors(data: UpdateMentorsRequest, session: Session = Depends(get_session)):
+    """
+    Update the list of mentors for a specific mentee.
+    """
+    try:
+        # Fetch the user by name
+        user = session.exec(select(User).where(User.Name == data.name)).first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if user.Role != RoleEnum.mentee:
+            raise HTTPException(status_code=400, detail="The user is not a mentee")
+
+        # Update the Mentors field
+        user.Mentors = data.mentors
+
+        # Commit and refresh the session
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
+        return {"message": "Mentors updated successfully", "user": UserOut.from_orm(user)}
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while updating mentors")
+
 
 @app.delete("/mentees/{mentee_id}", response_model=dict)
 def delete_mentee(mentee_id: int, session: Session = Depends(get_session)):
@@ -801,7 +876,8 @@ def authenticate_user(auth_request: AuthRequest, session: Session = Depends(get_
         Points=user.Points,
         Mentors=user.Mentors or [],
         Images=user.Images or [],
-        Role=user.Role
+        Role=user.Role,
+        TeamID=user.TeamID
     )
 
 @app.get("/mentees/team/{team_id}", response_model=List[UserOut])
@@ -823,14 +899,16 @@ def get_mentees_by_team_id(team_id: int, session: Session = Depends(get_session)
             Points=mentee.Points,
             Mentors=mentee.Mentors or [],
             Images=mentee.Images or [],
-            Role=mentee.Role
+            Role=mentee.Role,
+            TeamID=mentee.TeamID
+
         )
         for mentee in mentees
     ]
     return mentees_out
 
 
-@app.delete("/mentees", response_model=dict)
+@app.delete("/mentees/delete-all", response_model=dict)
 def delete_all_mentees(session: Session = Depends(get_session)):
    try:
         # Query all users with the role of 'mentee'
@@ -851,3 +929,24 @@ def delete_all_mentees(session: Session = Depends(get_session)):
         # Rollback in case of any error
         session.rollback()
         raise HTTPException(status_code=400, detail=f"Error deleting mentees: {str(e)}")
+   
+   
+@app.delete("/mentees/by-name/{mentee_name}", response_model=dict)
+def delete_mentee_by_name(mentee_name: str, session: Session = Depends(get_session)):
+    # Fetch the mentee by Name
+    mentee = session.query(User).filter(User.Name == mentee_name, User.Role == RoleEnum.mentee).first()
+
+    # Check if the mentee exists and has the correct role
+    if not mentee:
+        raise HTTPException(status_code=404, detail="Mentee not found")
+
+    try:
+        # Delete the mentee and commit the transaction
+        session.delete(mentee)
+        session.commit()
+    except Exception as e:
+        # Rollback in case of any error
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Error deleting mentee: {e}")
+
+    return {"message": f"Mentee '{mentee_name}' deleted successfully"}

@@ -84,34 +84,60 @@
 // };
 
 // export default UserManagement;
-
 import React, { useState } from "react";
 import axios from "axios";
 
 const UserManagement = () => {
-    // State to hold mentee data
+    // State to hold mentee data (Name and Mentors)
     const [menteeData, setMenteeData] = useState({
-        Name: "", // Match backend key
-        Email: "",
-        Password: "",
+        Name: "",
+        Mentors: [] as string[],  // Array to hold mentor names
     });
 
     // State to manage success and error messages
     const [message, setMessage] = useState("");
 
-    // Handle input changes
+    // State for deleting a mentee by name
+    const [menteeToDelete, setMenteeToDelete] = useState("");
+
+    // Handle input changes for mentee name (input fields)
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setMenteeData({ ...menteeData, [name]: value }); // Update state dynamically based on name attribute
+        setMenteeData({ ...menteeData, [name]: value });
     };
 
-    // Handle form submission
-    const handleAddMentee = async (e: React.FormEvent) => {
+    // Handle multi-select changes for mentors (select box)
+    const handleMentorsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedMentors = Array.from(e.target.selectedOptions, option => option.value);
+        setMenteeData({ ...menteeData, Mentors: selectedMentors });
+    };
+
+    // Handle form submission for assigning mentors
+    const handleAssignMentors = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(""); // Clear previous messages
 
         try {
-            const response = await axios.post("http://localhost:8000/mentees/new", menteeData);
+            const response = await axios.post("http://localhost:8000/mentees/assign_mentors", {
+                Name: "Samai", // Assuming menteeName is defined in your state
+                Mentors: "eek", // Assuming selectedMentors is an array of mentor names
+              },);
+            setMessage(response.data.message); // Display success message from the server
+        } catch (error: any) {
+            if (error.response) {
+                // Backend error response
+                setMessage(`Error: ${error.response.data.detail || error.message}`);
+            } else {
+                setMessage(`Error: ${error.message}`);
+            }
+        }
+    };
+     // Handle deleting all mentees
+     const handleDeleteAllMentees = async () => {
+        setMessage(""); // Clear previous messages
+
+        try {
+            const response = await axios.post("http://localhost:8000/mentees/delete-all", menteeData);
             setMessage(response.data.message); // Display success message from the server
         } catch (error: any) {
             if (error.response) {
@@ -123,46 +149,76 @@ const UserManagement = () => {
         }
     };
 
+    // Handle deleting a single mentee by name
+    const handleDeleteMenteeByName = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setMessage(""); // Clear previous messages
+
+        try {
+            const response = await axios.delete(
+                `http://localhost:8000/mentees/by-name/${menteeToDelete}`
+            );
+            setMessage(response.data.message); // Display success message from the server
+        } catch (error: any) {
+            if (error.response) {
+                setMessage(`Error: ${error.response.data.detail || error.message}`);
+            } else {
+                setMessage(`Error: ${error.message}`);
+            }
+        }
+    };
+
     return (
         <div>
-            <h1>User Management</h1>
-            <form onSubmit={handleAddMentee}>
+            <h1>Assign Mentors to Mentee</h1>
+            <form onSubmit={handleAssignMentors}>
                 <div>
-                    <label>Name:</label>
+                    <label>Name of Mentee:</label>
                     <input
                         type="text"
-                        name="Name" // Match backend key
-                        value={menteeData.Name} // Ensure this matches the state key
+                        name="Name"
+                        value={menteeData.Name}
                         onChange={handleInputChange}
                         placeholder="Enter mentee's name"
                         required
                     />
                 </div>
                 <div>
-                    <label>Email:</label>
-                    <input
-                        type="email"
-                        name="Email" // Match backend key
-                        value={menteeData.Email}
-                        onChange={handleInputChange}
-                        placeholder="Enter mentee's email"
+                    <label>Mentors:</label>
+                    <select
+                        name="Mentors"
+                        value={menteeData.Mentors}
+                        onChange={handleMentorsChange}
+                        multiple
                         required
-                    />
+                    >
+                        <option value="Mentor1">Mentor1</option>
+                        <option value="Mentor2">Mentor2</option>
+                        <option value="Mentor3">Mentor3</option>
+                        <option value="Mentor4">Mentor4</option>
+                    </select>
                 </div>
-                <div>
-                    <label>Password:</label>
-                    <input
-                        type="password"
-                        name="Password" // Match backend key
-                        value={menteeData.Password}
-                        onChange={handleInputChange}
-                        placeholder="Enter password"
-                        required
-                    />
-                </div>
-                <button type="submit">Add Mentee</button>
+                <button type="submit">Assign Mentors</button>
             </form>
+            {/* Button to Delete All Mentees */}
+            <button onClick={handleDeleteAllMentees}>
+                Remove All Mentees
+            </button>
 
+            <h2>Delete Mentee by Name</h2>
+            <form onSubmit={handleDeleteMenteeByName}>
+                <div>
+                    <label>Name of Mentee:</label>
+                    <input
+                        type="text"
+                        value={menteeToDelete}
+                        onChange={(e) => setMenteeToDelete(e.target.value)}
+                        placeholder="Enter mentee's name"
+                        required
+                    />
+                </div>
+                <button type="submit">Delete Mentee</button>
+            </form>
             {/* Display messages */}
             {message && <p>{message}</p>}
         </div>

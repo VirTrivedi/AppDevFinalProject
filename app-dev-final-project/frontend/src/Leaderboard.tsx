@@ -42,12 +42,13 @@ const Leaderboard: React.FC = () => {
     
     return (
       <div style={styles.leaderboardContainer}>
-        <img
-            src="/images/leaderboardbg.png"
-            alt="background" 
+        <div style={styles.background}>
+        {/* <img
+            // src="/images/leaderboardbg.png"
+            // alt="background" 
             style={styles.background}
-            />
-          
+            /> */}
+          </div>
          <div style={styles.header}>
              <nav style={styles.navbar}>
                 <img src="/images/computer-icon.png"
@@ -140,6 +141,7 @@ const Leaderboard: React.FC = () => {
           </p>
         </div>
       </div>
+      
     );
   };
   
@@ -153,10 +155,14 @@ const styles: {
         width: "80px",
     },
   background: {
-    width: "100%",
-    height: "100%",
-    zIndex: -1,
     position: "fixed",
+    width: "100vw",
+    height: "100vh",
+    backgroundImage: "url('/images/leaderboardbg.png')",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
+    // backgroundPosition: "center",
+    zIndex: -1,
     top: 0,
     left: 0,
   },

@@ -13,6 +13,7 @@ const SignUp: React.FC = () => {
   const API_BASE_URL = "http://127.0.0.1:8000";
 
   const handleSignUp = async () => {
+
     if (!name || !email || !password) {
       setError("All fields are required.");
       return;
@@ -32,9 +33,12 @@ const SignUp: React.FC = () => {
         alert("Signup successful! Redirecting to login page...");
         navigate("/login"); // Redirect to login page
       }
+
     } catch (err) {
+
       console.error("Error during signup:", err);
       setError("Signup failed. Please try again or use a different email.");
+      
     }
   };
 

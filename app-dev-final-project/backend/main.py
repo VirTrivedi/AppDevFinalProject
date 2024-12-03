@@ -251,17 +251,6 @@ def delete_mentee(mentee_id: int, session: SessionDep):
     return {"ok": True}
 
 
-
-
-############
-
-
-
-
-
-
-
-
 @app.post("/photos/new")
 def create_photo(
     file: Annotated[UploadFile, Form(...)],

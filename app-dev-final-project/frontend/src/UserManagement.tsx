@@ -10,20 +10,25 @@ const UserManagement = () => {
         // other mentee info you need
     });
 
-    // Function to remove a user and add a mentee
-    const handleRemoveAndAddMentee = async () => {
+    // Function to remove a user
+    const handleRemoveUser = async () => {
         try {
-            // First, remove the user using the teamId and name
             await axios.delete(`http://localhost:8000/users/${teamId}/${name}`);
             console.log("User removed successfully");
+            // Optionally, reset the form or show a success message
+        } catch (error) {
+            console.error("Error during user removal", error);
+        }
+    };
 
-            // Then, add the mentee
+    // Function to add a mentee
+    const handleAddMentee = async () => {
+        try {
             await axios.post("http://localhost:8000/mentees", menteeData);
             console.log("Mentee added successfully");
-
-            // Reset the form or show a success message
+            // Optionally, reset the form or show a success message
         } catch (error) {
-            console.error("Error during user removal or mentee addition", error);
+            console.error("Error during mentee addition", error);
         }
     };
 
@@ -31,6 +36,7 @@ const UserManagement = () => {
         <div>
             <h1>User Management</h1>
             <div>
+                <h2>Remove User</h2>
                 <input
                     type="text"
                     placeholder="Team ID"
@@ -43,11 +49,11 @@ const UserManagement = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                 />
-                <button onClick={handleRemoveAndAddMentee}>Remove User and Add Mentee</button>
+                <button onClick={handleRemoveUser}>Remove User</button>
             </div>
 
             <div>
-                <h2>Add Mentee Information</h2>
+                <h2>Add Mentee</h2>
                 <input
                     type="text"
                     placeholder="Mentee Name"
@@ -71,6 +77,7 @@ const UserManagement = () => {
                     }
                 />
                 {/* Add other fields as needed */}
+                <button onClick={handleAddMentee}>Add Mentee</button>
             </div>
         </div>
     );
